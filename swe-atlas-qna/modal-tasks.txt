@@ -1,0 +1,27 @@
+# SWE-Atlas QnA tasks that need Modal or local Docker: their images (maddy, paperless-ngx)
+# have dead Debian 11 package sources that break e2b sandbox provisioning.
+scale-ai/task-6905333b74f22949d97ba9be
+scale-ai/task-6905333b74f22949d97ba9cb
+scale-ai/task-6905333b74f22949d97ba9d0
+scale-ai/task-6905333b74f22949d97ba9d1
+scale-ai/task-6905333b74f22949d97ba9d2
+scale-ai/task-6905333b74f22949d97ba9d3
+scale-ai/task-6905333b74f22949d97ba9d4
+scale-ai/task-6905333b74f22949d97ba9d5
+scale-ai/task-6905333b74f22949d97ba9d6
+scale-ai/task-6905333b74f22949d97ba9d7
+scale-ai/task-6905333b74f22949d97ba9d8
+scale-ai/task-6905333b74f22949d97ba9d9
+scale-ai/task-6905333b74f22949d97ba9db
+scale-ai/task-6905333b74f22949d97ba9dc
+scale-ai/task-6905333b74f22949d97ba9dd
+scale-ai/task-6905333b74f22949d97ba9de
+scale-ai/task-6905333b74f22949d97ba9e0
+scale-ai/task-6905333b74f22949d97baa10
+scale-ai/task-6905333b74f22949d97baa11
+scale-ai/task-6905333b74f22949d97baa12
+scale-ai/task-6905333b74f22949d97baa14
+scale-ai/task-6905333b74f22949d97baa15
+scale-ai/task-6905333b74f22949d97baa16
+scale-ai/task-6905333b74f22949d97baa17
+scale-ai/task-6905333b74f22949d97baa21

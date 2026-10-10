@@ -1,0 +1,6 @@
+# SWE-Atlas images set ENTRYPOINT ["/bin/bash"], which turns Harbor's keep-alive command into
+# `/bin/bash sh -c "sleep infinity"` and stops the container at once. run.sh adds this overlay
+# for local Docker runs so the keep-alive runs as written.
+services:
+  main:
+    entrypoint: ["sh", "-c", "sleep infinity"]
