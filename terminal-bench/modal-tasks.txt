@@ -1,0 +1,24 @@
+# Terminal-Bench 4.0 tasks that need Modal or a large local Docker host: 11 start several
+# containers, 3 need an H100 GPU, 4 ask for more than 8 CPUs / 8 GiB, and the reference
+# solutions of cad-model and both layout-config-recreation tasks fail on e2b.
+terminal-bench/cad-model
+terminal-bench/ctr-optimization
+terminal-bench/cumulative-layout-shift
+terminal-bench/distributed-dedup
+terminal-bench/fp8-rmsnorm-gemm
+terminal-bench/freight-dispatch-shift
+terminal-bench/heat-pump-warranty
+terminal-bench/intrastat-meldung
+terminal-bench/jax-speedrun-gpu
+terminal-bench/kv-live-surgery
+terminal-bench/layout-config-recreation
+terminal-bench/layout-config-recreation2
+terminal-bench/legacy-utility-triage
+terminal-bench/live-database-cutover
+terminal-bench/math-eval-grader
+terminal-bench/medical-claims-processing
+terminal-bench/nextjs-performance
+terminal-bench/payments-pipeline-fix
+terminal-bench/takens-embedding-lean
+terminal-bench/uefi-bootkit
+terminal-bench/wdm-design

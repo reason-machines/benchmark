@@ -1,0 +1,4 @@
+# DeepSWE tasks whose grader fails on e2b: e2b does not apply the grading image's ENV, so
+# the grader cannot find its tools (pytest, go-ctrf-json-reporter) and writes reward -1.
+datacurve/goreleaser-retry-publish-auditing
+datacurve/igel-persist-feature-schema
