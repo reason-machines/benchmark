@@ -12,10 +12,13 @@ on the three benchmarks of the
 
 Harbor starts each task's container and grades it with the task's own verifier.
 Reason works on that container as a normal Session, in a new, empty workspace
-for every attempt, on `runtime/reason-v7-2026-10`: a dated harness release that
-never changes, so every rerun runs the same harness. Each benchmark scores
-pass@1, averaged over three attempts per task, and the Index is the
-equal-weight mean of the three. Timeouts score 0, provider refusals are redrawn
+for every attempt. We recommend running the pinned harness release
+`runtime/reason-v7-2026-10`, which never changes, so every rerun runs the same
+harness; the adapter requests it by default. Our October 2026 results ran
+earlier, on Reason's default harness at the time (`reason-c2-tools-v7`), which
+changed during the runs; each Harbor job's trials name the harness they ran.
+Each benchmark scores pass@1, averaged over three attempts per task, and the
+Index is the equal-weight mean of the three. Timeouts score 0, provider refusals are redrawn
 up to 10 times, and a Terminal-Bench attempt the reward-hacking judge fails
 scores 0. See the [methodology](docs/METHODOLOGY.md) for the full rules and
 their version history.
