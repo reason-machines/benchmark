@@ -1,6 +1,6 @@
 # Methodology
 
-Version 1.6.1. How we run and score Reason on the three benchmarks of the
+Version 1.6.2. How we run and score Reason on the three benchmarks of the
 [Artificial Analysis Coding Agent Index](https://artificialanalysis.ai/agents/coding-agents)
 v1.5, which this version is based on.
 
@@ -70,20 +70,23 @@ Reason did not classify.
   and features, environment, Reason server commit and worker version. Reason deploys
   continuously, so server and worker builds vary within a pass; the run's
   notes list them. The others must be the same for every counted attempt.
-- **Publishing:** a pass is published only when `score.py --strict` passes:
-  every task of every benchmark has all its attempt slots filled, on one
-  configuration, and every counted attempt passes the trajectory gates below.
-  Its manifest, score, screening and adjudications are published with its
-  public Harbor job.
+- **Strict check:** `score.py --strict` passes when every task of every
+  benchmark has all its attempt slots filled, on one configuration, and every
+  counted attempt passes the trajectory gates below. We recommend it for every
+  pass. Our October 2026 Hub jobs predate some of its gates (pinned harness,
+  per-response token usage, trajectory fidelity) and don't pass them. A pass's
+  manifest, score, screening and adjudications are published with its public
+  Harbor job.
 
 ## Agent
 
 - **Harness:** Reason, through the [Reason Harbor adapter](https://github.com/reason-machines/reason-machines-harbor)
   (0.3.19 or later). The agent works on the task container as a normal Reason
-  Session on a dated harness release, `runtime/reason-v7-2026-10` unless a
-  run's notes name another: Reason's default harness as it ran in October
-  2026, frozen. Reason keeps changing its default harness; a release never
-  changes, and a change ships as a new dated release. The adapter requests the
+  Session. We recommend a dated harness release, `runtime/reason-v7-2026-10`:
+  Reason's default harness as it ran in October 2026, frozen. Reason keeps
+  changing its default harness; a release never changes, and a change ships as
+  a new dated release. Runs before the release existed used the default
+  harness of the time, and their trials name it. The adapter requests the
   current release by default in ephemeral mode, and any Reason workspace can
   request one by name (`--ak runtime_profile=...`). `score.py` lists the runtime profile
   each counted attempt reports, and `--strict` requires a single one.
@@ -184,6 +187,7 @@ subagents either.
 | 1.5.1 | October 2026 | The `lambda` part is any remote plain-Docker host (Lambda Cloud H100 SXM/PCIe and A10, GCP a3-highgpu-1g H100), for any task on a `modal-tasks.txt` list. |
 | 1.6 | October 2026 | Cost is priced per model response from the trajectory's token counts and a committed price table, subagents included, with the cost of each token kind listed; `--strict` requires complete token usage. |
 | 1.6.1 | October 2026 | Results are published as public Harbor Hub jobs, each with its notes (builds, voids, reruns, refusals, judge results), manifest, score and screening; this repository holds the runner, scorer and methodology. |
+| 1.6.2 | October 2026 | The pinned harness release and `--strict` are recommended, not claimed for every published pass: the October 2026 results ran on the default harness of the time and predate some `--strict` gates. |
 
 ## References
 
