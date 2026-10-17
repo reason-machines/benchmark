@@ -69,6 +69,89 @@ agent skill opens with an intent interview, skipped because the script is fixed.
 
 ![HyperFrames contact sheet, 1 fps](https://api.reasonmachines.com/media/pr-screenshots/19a2443a-391e-4e48-942f-bf54997676b2/eaa8c534a223ea1f7a0c50a575fb6aa5/reason-demo-hyperframes-contact-sheet.jpg)
 
-## FFrames 1.2
+## FFrames 1.2 (finished)
 
-Running.
+| Field | Value |
+| --- | --- |
+| Session | https://reasonmachines.com/agents/33f56bfb-4b3b-4e79-9a03-44057a8edbcb |
+| Draft PR | https://github.com/reason-machines/content-factory/pull/8 (not merged) |
+| Engine | FFrames 1.2.0 (cargo-fframes 1.2.0), CPU tiny-skia backend |
+| Start | 17:52:44 |
+| Engine ready | 17:59:21 (+6m37s) |
+| First full render done | 18:16:23 (+23m39s) |
+| Final render done | 18:26:47 (+34m03s) |
+| Final render wall time | 67.5 s real (user 257.9 s, ~53 fps) |
+| Review passes | 2 of 2, plus one audio-only re-render (AAC defaulted to 44.1 kHz, set to 48 kHz) |
+| Output | 1920x1080, 60 fps, 3600 frames, H.264 High yuv420p CRF 18, AAC LC 48 kHz stereo, 16.1 MB |
+
+**Deviations:** same kind as the others: added Slack chrome, a tax row, invented sub-agent
+log lines, an Open→Merged pill, axis tick labels and a minutes count-up. The fonts have no ✓
+glyph, so every check is a drawn vector placed left of its text. The scene 3 window is
+1560x740 to fit the safe area. Easing is hand-written on global time rather than the
+`timeline!` macro.
+
+**Engine friction:** the most setup work of the three. No root or apt, so libclang came
+from a PyPI wheel; the prebuilt FFmpeg links x264 ABI 163 while Debian 12 ships 164 (fixed
+by extracting libx264-163 from the Ubuntu archive and linking with an rpath); fframes.studio
+is blocked by the network allowlist (used the skill from GitHub raw). `Overlap::Next` starts
+the next scene earlier instead of extending the current one, so the ending redraws scene 7
+by hand. Embedded audio is mono, so the soundtrack loads at run time. Rendering itself was
+by far the fastest.
+
+**Video:** not published, same `media_publish_file` rejection. Contact sheet and stills:
+
+![FFrames contact sheet, 1 fps](https://api.reasonmachines.com/media/pr-screenshots/33f56bfb-4b3b-4e79-9a03-44057a8edbcb/2a2c27b64efdadf99872ebcc2afa5227/contact-sheet.png)
+
+![FFrames protocol stills at 2, 8, 17, 26, 34, 42, 50, 57.5 s](https://api.reasonmachines.com/media/pr-screenshots/33f56bfb-4b3b-4e79-9a03-44057a8edbcb/0d020872ed2605499014d58be95c9a78/stills.png)
+
+## Head-to-head
+
+| | Remotion 4 | HyperFrames | FFrames 1.2 |
+| --- | --- | --- | --- |
+| Engine ready | +1m46s | +1m46s | +6m37s |
+| First full render | +20m24s | +23m56s | +23m39s |
+| Done | **+26m40s** | +28m52s | +34m03s |
+| Final render, 60 s at 60 fps | 323.9 s (~11 fps) | 193.4 s (~19 fps) | **67.5 s (~53 fps)** |
+| Review passes | 2 | 2 (second clean) | 2 + audio-only re-render |
+| Spec (1080p60, 3600 frames, 48 kHz, soundtrack) | pass | pass | pass |
+| Scripted copy and benchmark figures | exact | exact | exact |
+
+All three ran on identical 4-vCPU cloud machines with the same model and limits. Every run
+finished well inside the 60-minute soft limit.
+
+**Quality, judged from stills only.** I compared the eight protocol stills and the 1 fps
+contact sheets side by side. Motion, easing, beat sync and audio were not judged, because no
+MP4 could be published and they could not be watched.
+
+- **Remotion: best of the three by a small margin.** The UI cards are the largest and most
+  legible at 1080p, the layouts fill the frame, and the PR, failover and benchmark scenes read
+  cleanly. Nothing looked broken.
+- **FFrames: close second.** The layouts and typography are about as polished as Remotion's,
+  and the drawn vector checks look native. The before/after shots in scene 6 use grey
+  placeholder bars, which look a little more generic.
+- **HyperFrames: competent but the least legible.** The windows and cards are visibly smaller
+  with more empty space, so the sub-agent cards and the Slack text are small at 1080p. This
+  is judged from a 480p GIF and a JPEG contact sheet, so fine detail is less certain than for
+  the other two.
+
+All three share the same house style because they built the same script, so the quality
+spread is narrow. None has a visible defect in the sampled frames.
+
+**Takeaways**
+
+1. **Fastest from script to finished cut: Remotion.** It needed no toolchain work, and its
+   React mental model kept the agent's two passes short.
+2. **Fastest renderer: FFrames, by 2.9x over HyperFrames and 4.8x over Remotion.** Its 6m37s
+   setup was toolchain repair specific to this sandbox (libclang, x264 ABI). A prebuilt image
+   would remove most of it, and then its render speed matters most for many variants or long
+   videos.
+3. **HyperFrames had the best review loop.** `snapshot --at` rendered 32 stills in 9 s.
+   Rendering was handicapped here: without the blocked headless-shell download it had to
+   fall back to screenshot capture, so 193 s is a floor case.
+4. **One sandbox issue hit two engines.** Remotion and HyperFrames both lost their
+   headless-shell download to the proxy. Allow-listing it, or caching it in the machine
+   image, would make both faster to start and HyperFrames faster to render.
+
+**Gap shared by every run:** `media_publish_file` rejected every video file, including a
+2 s synthetic test clip, on all three machines. That is a tool-side issue unrelated to the
+engines, and it is why no MP4 is linked here.
