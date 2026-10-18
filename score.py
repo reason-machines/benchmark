@@ -78,6 +78,7 @@ CHECKED = {"build per step": "one", "trajectory fidelity": "complete", "token us
 PRICES = {
     "gpt-6-luna": ((0.10, 0.01, 0.125, 0.50), (0.20, 0.02, 0.25, 0.75)),
     "gpt-6-astra": ((10.0, 1.0, 12.5, 50.0), (20.0, 2.0, 25.0, 75.0)),
+    "gpt-6.1-sol": ((2.0, 0.10, 2.5, 10.0), (4.0, 0.20, 5.0, 15.0)),
 }
 LONG_CONTEXT_TOKENS = 272_000
 TOKEN_KINDS = ("uncached input", "cache read", "cache write", "output")
