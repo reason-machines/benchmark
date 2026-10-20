@@ -1,6 +1,6 @@
 # Methodology
 
-Version 1.6.2. How we run and score Reason on the three benchmarks of the
+Version 1.6.3. How we run and score Reason on the three benchmarks of the
 [Artificial Analysis Coding Agent Index](https://artificialanalysis.ai/agents/coding-agents)
 v1.5, which this version is based on.
 
@@ -124,10 +124,12 @@ Each attempt's `agent/trajectory.json` (ATIF) is the Session as the model saw it
 
 `score.py --strict` requires, for every counted attempt, a trajectory with no
 excerpts and no redaction other than injected secrets and Reason-issued tokens
-(fidelity), and one
-server commit for all its agent steps (one build). It lists the harness digest
-each attempt reports and requires a single one. An attempt whose trajectory
-doesn't record these fails the gate.
+(fidelity). It lists the harness digest each attempt reports and requires a
+single one. An attempt whose trajectory doesn't record these fails the gate.
+It also lists how many attempts ran on more than one server commit, because
+Reason deployed during them, but doesn't gate on it: the harness digest fixes
+the prompt and tools the model is given, and production deploys many times
+during a pass.
 
 ## Environment
 
@@ -188,6 +190,7 @@ subagents either.
 | 1.6 | October 2026 | Cost is priced per model response from the trajectory's token counts and a committed price table, subagents included, with the cost of each token kind listed; `--strict` requires complete token usage. |
 | 1.6.1 | October 2026 | Results are published as public Harbor Hub jobs, each with its notes (builds, voids, reruns, refusals, judge results), manifest, score and screening; this repository holds the runner, scorer and methodology. |
 | 1.6.2 | October 2026 | The pinned harness release and `--strict` are recommended, not claimed for every published pass: the October 2026 results ran on the default harness of the time and predate some `--strict` gates. |
+| 1.6.3 | October 2026 | `--strict` lists attempts that ran across a Reason deploy instead of failing them; the single harness digest is what it gates. |
 
 ## References
 

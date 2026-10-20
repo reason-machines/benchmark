@@ -273,7 +273,7 @@ class ScoreTest(unittest.TestCase):
         self.assertNotIn("server commit", err)
         self.assertIn("| server commit | 2: cccccccccc (4), dddddddddd (1) |", out)
 
-    def test_strict_gates_each_trajectory_on_one_build_and_full_fidelity(self):
+    def test_strict_gates_each_trajectory_on_full_fidelity_and_lists_builds_per_step(self):
         t = self.tree
         t.job("deepswe", "e2b", "20261007T000000Z", 1,
               ("a", {"reward": 1.0, "trajectory": trajectory()}),
@@ -284,13 +284,18 @@ class ScoreTest(unittest.TestCase):
               ("f", {"reward": 1.0, "trajectory": trajectory(redactions={"[redacted-secret]": 3, "[redacted-run-token]": 1, "[redacted-token]": 0})}))
         status, out, err = self.main(None, True)
         self.assertEqual(status, 1)
+        # Production deploys mid-attempt, so attempts spanning server builds are listed, not gated.
         self.assertIn("| build per step | 2: one (4), spans builds (2) |", out)
-        self.assertIn("2 counted attempts have build per step: spans builds", err)
+        self.assertNotIn("build per step", err)
         self.assertIn("1 counted attempts have trajectory fidelity: excerpts", err)
         self.assertIn("1 counted attempts have trajectory fidelity: masks [redacted]", err)
         self.assertNotIn("don't record", err)
-        listed = next(line for line in err.splitlines() if line.startswith("deepswe counted attempts with build per step"))
-        self.assertEqual(sorted(path.split("/")[-1].split("__")[0] for path in listed.split(": ", 2)[2].split()), ["b", "c"])
+        listed = next(line for line in err.splitlines() if line.startswith("deepswe counted attempts with trajectory fidelity: excerpts"))
+        self.assertEqual([path.split("/")[-1].split("__")[0] for path in listed.split(": ", 2)[2].split()], ["d"])
+        t.job("swe-atlas-qna", "e2b", "20261007T000000Z", 1,
+              ("a", {"reward": 1.0, "trajectory": trajectory(commits=("c" * 40, "d" * 40))}))
+        status, _, err = self.main(None, True)
+        self.assertNotIn("build per step", err)
 
     def test_strict_requires_one_harness_digest(self):
         t = self.tree
@@ -311,9 +316,9 @@ class ScoreTest(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertIn("| build per step | unknown (3) |", out)
         self.assertIn("| trajectory fidelity | 2: unknown (2), complete (1) |", out)
-        self.assertIn("deepswe counted attempts with build per step: unknown: ", err)
+        self.assertIn("deepswe counted attempts with trajectory fidelity: unknown: ", err)
         status, _, err = self.main(None, True)
-        self.assertIn("3 counted attempts don't record their build per step", err)
+        self.assertNotIn("build per step", err)
         self.assertIn("2 counted attempts don't record their trajectory fidelity", err)
         self.assertIn("2 counted attempts don't record their harness digest", err)
 
