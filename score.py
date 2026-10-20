@@ -39,10 +39,12 @@ config and the adapter's agent/deployment.json and agent/receipt.json. --strict 
 gate before publishing: it fails unless every benchmark has every task with every slot
 filled, and the counted attempts share one model, reasoning effort, adapter version,
 runtime profile, harness digest and runtime feature set. Server and worker builds roll
-with production deploys, so they are listed, not gated. Each attempt's trajectory
-(agent/trajectory.json) must also show it ran on one server build ("build per step")
-and was exported whole, masking only injected secrets and Reason-issued tokens ("trajectory fidelity"); attempts
-that don't, or whose trajectory doesn't record it, are listed and fail --strict.
+with production deploys, so they are listed, not gated, as is whether each attempt's
+agent steps all ran on one server build ("build per step"): the harness digest, not the
+server build, fixes what the model is given. Each attempt's trajectory
+(agent/trajectory.json) must also show it was exported whole, masking only injected
+secrets and Reason-issued tokens ("trajectory fidelity"); attempts that don't, or whose
+trajectory doesn't record it, are listed and fail --strict.
 
 Cost per attempt prices the token counts in the attempt's trajectory, its subagents'
 included, one model response at a time from PRICES: uncached input, cache reads, cache
@@ -70,9 +72,9 @@ REFUSAL_REDRAWS = 10
 TIMEOUTS = {"AgentTimeoutError", "VerifierTimeoutError"}
 # Build fields every counted attempt must share (--strict), then the ones only listed.
 INVARIANT = ("model", "reasoning effort", "adapter", "runtime profile", "harness digest", "runtime features")
-LISTED = ("environment", "server commit", "worker")
+LISTED = ("environment", "server commit", "worker", "build per step")
 # Per-attempt trajectory checks (--strict) and the value each must have; other values are listed.
-CHECKED = {"build per step": "one", "trajectory fidelity": "complete", "token usage": "complete"}
+CHECKED = {"trajectory fidelity": "complete", "token usage": "complete"}
 # USD per million tokens: uncached input, cache read, cache write, output; then the rates for a
 # request whose input is over LONG_CONTEXT_TOKENS. OpenAI's prices, which Reason and Pi also bill at.
 PRICES = {
@@ -438,7 +440,7 @@ if __name__ == "__main__":
     parser.add_argument("--attempts", type=int, help="attempt slots per task (default: the jobs' largest n_attempts)")
     parser.add_argument("--strict", action="store_true",
                         help="fail unless the run is complete and its counted attempts share one configuration, "
-                             "each on one server build with a complete trajectory and token usage")
+                             "each with a complete trajectory and token usage")
     parser.add_argument("--expect", type=float, metavar="R",
                         help="fail unless every task scores R (preflight: 1 for oracle, 0 for nop)")
     parser.add_argument("run", type=Path)
