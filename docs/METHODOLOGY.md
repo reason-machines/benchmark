@@ -91,11 +91,8 @@ Reason did not classify.
   rerun unchanged. `score.py` lists the runtime profile each counted attempt
   reports, and `--strict` requires a single one.
 
-  | Release | What it is |
-  |---|---|
-  | `runtime/reason-v7-2026-10` | Reason's default harness as it ran in October 2026, frozen (the adapter default). |
-  | `runtime/reason-v8-2026-10` | Bash plus the `reason` script tool, frozen; worker CLI 0.2.151. |
-  | `runtime/reason-v8.1-2026-10` (recommended for new passes, adapter 0.3.35 or later) | v8 with two changes. A Bash command still running at the model's own `timeout` returns its output so far and keeps running in the background instead of being killed. And the adapter installs pinned [agent tools](https://github.com/reason-machines/benchmark/releases/tag/agent-tools-2026-10-22) (`rg`, `file`, `xxd`, `strings`, `unzip`, `apply_patch`; static builds, SHA-256 pinned) last on the agent's PATH: the task image's own command of the same name always wins, and the verifier runs with the image's environment and never sees them. Nothing the model is told changes. |
+  The recommended release for new passes is `runtime/reason-v8.1-2026-10`
+  (adapter 0.3.35 or later).
 - **State:** every attempt starts in a new, empty, single-use workspace.
   Memory and skills are on, as in any workspace, but the workspace starts
   with none, so nothing carries over between attempts.
@@ -197,7 +194,7 @@ subagents either.
 | 1.6.1 | October 2026 | Results are published as public Harbor Hub jobs, each with its notes (builds, voids, reruns, refusals, judge results), manifest, score and screening; this repository holds the runner, scorer and methodology. |
 | 1.6.2 | October 2026 | The pinned harness release and `--strict` are recommended, not claimed for every published pass: the October 2026 results ran on the default harness of the time and predate some `--strict` gates. |
 | 1.6.3 | October 2026 | `--strict` lists attempts that ran across a Reason deploy instead of failing them; the single harness digest is what it gates. |
-| 1.7 | October 2026 | Release `runtime/reason-v8.1-2026-10` (adapter 0.3.35): v8 with yield on timeout and pinned agent tools, recommended for new passes; the adapter default stays `runtime/reason-v7-2026-10`. |
+| 1.7 | October 2026 | Recommended release `runtime/reason-v8.1-2026-10` (adapter 0.3.35 or later); the adapter default stays `runtime/reason-v7-2026-10`. |
 
 ## References
 

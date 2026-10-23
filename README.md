@@ -15,8 +15,7 @@ Reason works on that container as a normal Session, in a new, empty workspace
 for every attempt. We recommend running a pinned harness release, which never
 changes, so every rerun runs the same harness. For new passes that is
 `runtime/reason-v8.1-2026-10` (adapter 0.3.35 or later, `--ak runtime_profile=runtime/reason-v8.1-2026-10`);
-the adapter requests `runtime/reason-v7-2026-10` by default. See
-[the releases](docs/METHODOLOGY.md#agent).
+the adapter requests `runtime/reason-v7-2026-10` by default.
 Each benchmark scores pass@1, averaged over three attempts per task, and the
 Index is the equal-weight mean of the three. Timeouts score 0, provider refusals are redrawn
 up to 10 times, and a Terminal-Bench attempt the reward-hacking judge fails
