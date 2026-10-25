@@ -12,10 +12,13 @@ on the three benchmarks of the
 
 Harbor starts each task's container and grades it with the task's own verifier.
 Reason works on that container as a normal Session, in a new, empty workspace
-for every attempt, on `runtime/reason-v7-2026-10`: a dated harness release that
-never changes, so every rerun runs the same harness. Each benchmark scores
-pass@1, averaged over three attempts per task, and the Index is the
-equal-weight mean of the three. Timeouts score 0, provider refusals are redrawn
+for every attempt. We recommend running a pinned harness release, which never
+changes, so every rerun runs the same harness. The adapter (0.3.38 or later)
+requests `runtime/reason-agent-1.2` by default, so the commands below run it without naming it;
+to rerun an earlier release, name it, for example `--ak runtime_profile=runtime/reason-v7-2026-10`.
+Results here are on the Artificial Analysis Coding Agent Index v1.5.
+Each benchmark scores pass@1, averaged over three attempts per task, and the
+Index is the equal-weight mean of the three. Timeouts score 0, provider refusals are redrawn
 up to 10 times, and a Terminal-Bench attempt the reward-hacking judge fails
 scores 0. See the [methodology](docs/METHODOLOGY.md) for the full rules and
 their version history.
@@ -28,7 +31,7 @@ and a [Reason API key](https://reasonmachines.ai/customize?tab=api) with `run`,
 `devices:use` and `org:write`.
 
 ```bash
-uv tool install "harbor==0.22.0" --with "reason-machines-harbor>=0.3.19"
+uv tool install "harbor==0.22.0" --with "reason-machines-harbor>=0.3.38"
 export REASON_API_KEY=<YOUR-REASON-KEY>
 
 # For your own provider key, connect it under Models and use --model byok:openai:gpt-6-luna
