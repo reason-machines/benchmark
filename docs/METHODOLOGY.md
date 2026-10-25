@@ -1,6 +1,6 @@
 # Methodology
 
-Version 1.7. How we run and score Reason on the three benchmarks of the
+Version 1.8. How we run and score Reason on the three benchmarks of the
 [Artificial Analysis Coding Agent Index](https://artificialanalysis.ai/agents/coding-agents)
 v1.5, which this version is based on.
 
@@ -81,18 +81,16 @@ Reason did not classify.
 ## Agent
 
 - **Harness:** Reason, through the [Reason Harbor adapter](https://github.com/reason-machines/reason-machines-harbor)
-  (0.3.19 or later). The agent works on the task container as a normal Reason
+  (0.3.38 or later). The agent works on the task container as a normal Reason
   Session. We recommend a dated harness release: Reason keeps changing its
   default harness; a release never changes, and a change ships as a new dated
   release. Runs before the releases existed used the default harness of the
   time, and their trials name it. Any Reason workspace can request a release by
-  name (`--ak runtime_profile=...`); the adapter requests
-  `runtime/reason-v7-2026-10` by default in ephemeral mode, so older commands
-  rerun unchanged. `score.py` lists the runtime profile each counted attempt
-  reports, and `--strict` requires a single one.
-
-  The recommended release for new passes is `runtime/reason-v8.1-2026-10`
-  (adapter 0.3.35 or later).
+  name (`--ak runtime_profile=...`); the adapter (0.3.38 or later) requests
+  `runtime/reason-agent-1.2` by default in ephemeral mode. To rerun an earlier
+  release, name it, for example `runtime/reason-v7-2026-10`. `score.py` lists
+  the runtime profile each counted attempt reports, and `--strict` requires a
+  single one.
 - **State:** every attempt starts in a new, empty, single-use workspace.
   Memory and skills are on, as in any workspace, but the workspace starts
   with none, so nothing carries over between attempts.
@@ -195,6 +193,7 @@ subagents either.
 | 1.6.2 | October 2026 | The pinned harness release and `--strict` are recommended, not claimed for every published pass: the October 2026 results ran on the default harness of the time and predate some `--strict` gates. |
 | 1.6.3 | October 2026 | `--strict` lists attempts that ran across a Reason deploy instead of failing them; the single harness digest is what it gates. |
 | 1.7 | October 2026 | Recommended release `runtime/reason-v8.1-2026-10` (adapter 0.3.35 or later); the adapter default stays `runtime/reason-v7-2026-10`. |
+| 1.8 | October 2026 | The adapter (0.3.38 or later) requests `runtime/reason-agent-1.2` by default; earlier releases are named explicitly. Claude Opus 5.5 joins the price table. Based on Coding Agent Index v1.5; Artificial Analysis moved to v2.0 on October 22, 2026. |
 
 ## References
 

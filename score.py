@@ -76,11 +76,14 @@ LISTED = ("environment", "server commit", "worker", "build per step")
 # Per-attempt trajectory checks (--strict) and the value each must have; other values are listed.
 CHECKED = {"trajectory fidelity": "complete", "token usage": "complete"}
 # USD per million tokens: uncached input, cache read, cache write, output; then the rates for a
-# request whose input is over LONG_CONTEXT_TOKENS. OpenAI's prices, which Reason and Pi also bill at.
+# request whose input is over LONG_CONTEXT_TOKENS. Each provider's list prices, which Reason and Pi also
+# bill at. Anthropic's cache write is its 5-minute rate (1.25x input); Claude Opus 5.5 has no
+# long-context tier (1M window at one price), so both tuples are the same.
 PRICES = {
     "gpt-6-luna": ((0.10, 0.01, 0.125, 0.50), (0.20, 0.02, 0.25, 0.75)),
     "gpt-6-astra": ((10.0, 1.0, 12.5, 50.0), (20.0, 2.0, 25.0, 75.0)),
     "gpt-6.1-sol": ((2.0, 0.10, 2.5, 10.0), (4.0, 0.20, 5.0, 15.0)),
+    "claude-opus-5-5": ((4.0, 0.20, 5.0, 20.0), (4.0, 0.20, 5.0, 20.0)),
 }
 LONG_CONTEXT_TOKENS = 272_000
 TOKEN_KINDS = ("uncached input", "cache read", "cache write", "output")
