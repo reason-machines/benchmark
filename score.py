@@ -77,13 +77,20 @@ LISTED = ("environment", "server commit", "worker", "build per step")
 CHECKED = {"trajectory fidelity": "complete", "token usage": "complete"}
 # USD per million tokens: uncached input, cache read, cache write, output; then the rates for a
 # request whose input is over LONG_CONTEXT_TOKENS. Each provider's list prices, which Reason also bills
-# at. Anthropic's cache write is its 5-minute rate (1.25x input); Claude Opus 5.5 has no
-# long-context tier (1M window at one price), so both tuples are the same.
+# at. Anthropic's cache write is its 5-minute rate (1.25x input); its current models have no
+# long-context tier (1M window at one price), so both tuples are the same. Claude Opus 4.8, Claude
+# Opus 5 and Claude Sonnet 5 are listed because Anthropic's server-side refusal fallback serves a
+# declined Claude Opus 5.5 / Claude Sonnet 5.5 request with them, and each step is priced by the
+# model that served it.
 PRICES = {
     "gpt-6-luna": ((0.10, 0.01, 0.125, 0.50), (0.20, 0.02, 0.25, 0.75)),
     "gpt-6-astra": ((10.0, 1.0, 12.5, 50.0), (20.0, 2.0, 25.0, 75.0)),
     "gpt-6.1-sol": ((2.0, 0.10, 2.5, 10.0), (4.0, 0.20, 5.0, 15.0)),
     "claude-opus-5-5": ((4.0, 0.20, 5.0, 20.0), (4.0, 0.20, 5.0, 20.0)),
+    "claude-opus-5": ((5.0, 0.50, 6.25, 25.0), (5.0, 0.50, 6.25, 25.0)),
+    "claude-opus-4-8": ((5.0, 0.50, 6.25, 25.0), (5.0, 0.50, 6.25, 25.0)),
+    "claude-sonnet-5-5": ((2.0, 0.20, 2.5, 10.0), (2.0, 0.20, 2.5, 10.0)),
+    "claude-sonnet-5": ((2.0, 0.20, 2.5, 10.0), (2.0, 0.20, 2.5, 10.0)),
 }
 LONG_CONTEXT_TOKENS = 272_000
 TOKEN_KINDS = ("uncached input", "cache read", "cache write", "output")
