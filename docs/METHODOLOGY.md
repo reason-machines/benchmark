@@ -1,6 +1,6 @@
 # Methodology
 
-Version 1.8.2. How we run and score Reason on the three benchmarks of the
+Version 1.8.3. How we run and score Reason on the three benchmarks of the
 [Artificial Analysis Coding Agent Index](https://artificialanalysis.ai/agents/coding-agents)
 v1.5, which this version is based on.
 
@@ -195,6 +195,7 @@ subagents either.
 | 1.7 | October 2026 | Recommended release `runtime/reason-v8.1-2026-10` (adapter 0.3.35 or later); the adapter default stays `runtime/reason-v7-2026-10`. |
 | 1.8 | October 2026 | The adapter (0.3.38 or later) requests `runtime/reason-agent-1.2` by default; earlier releases are named explicitly. Claude Opus 5.5 joins the price table. Based on Coding Agent Index v1.5; Artificial Analysis moved to v2.0 on October 22, 2026. |
 | 1.8.1 | October 2026 | Adapter 0.3.39 or later: trial snapshot files use the marker `@@reason-git-snapshot@@`. |
+| 1.8.3 | October 2026 | GPT-6.1 Terra joins the price table at OpenAI's published rates. |
 | 1.8.2 | October 2026 | Claude Opus 4.8, Claude Opus 5, Claude Sonnet 5 and Claude Sonnet 5.5 join the price table: Anthropic's server-side refusal fallback serves declined Claude requests with them, and each step is priced by the model that served it. |
 
 ## References
