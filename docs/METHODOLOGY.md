@@ -1,6 +1,6 @@
 # Methodology
 
-Version 1.9. How we run and score Reason on the three benchmarks of the
+Version 1.9.1. How we run and score Reason on the three benchmarks of the
 [Artificial Analysis Coding Agent Index](https://artificialanalysis.ai/agents/coding-agents)
 v1.5, which this version is based on.
 
@@ -81,12 +81,12 @@ Reason did not classify.
 ## Agent
 
 - **Harness:** Reason, through the [Reason Harbor adapter](https://github.com/reason-machines/reason-machines-harbor)
-  (0.3.42 or later). The agent works on the task container as a normal Reason
+  (0.3.43 or later). The agent works on the task container as a normal Reason
   Session. We recommend a dated harness release: Reason keeps changing its
   default harness; a release never changes, and a change ships as a new dated
   release. Runs before the releases existed used the default harness of the
   time, and their trials name it. Any Reason workspace can request a release by
-  name (`--ak runtime_profile=...`); the adapter (0.3.42 or later) requests
+  name (`--ak runtime_profile=...`); the adapter (0.3.43 or later) requests
   `runtime/reason-agent-1.3` by default in ephemeral mode. To rerun an earlier
   release, name it, for example `runtime/reason-agent-1.2`. `score.py` lists
   the runtime profile each counted attempt reports, and `--strict` requires a
@@ -198,6 +198,7 @@ subagents either.
 | 1.8.3 | October 2026 | GPT-6.1 Terra joins the price table at OpenAI's published rates. |
 | 1.8.2 | October 2026 | Claude Opus 4.8, Claude Opus 5, Claude Sonnet 5 and Claude Sonnet 5.5 join the price table: Anthropic's server-side refusal fallback serves declined Claude requests with them, and each step is priced by the model that served it. |
 | 1.9 | October 2026 | The adapter (0.3.42 or later) requests `runtime/reason-agent-1.3` by default: Reason Agent 1.2's prompt and tools, plus continuing a response cut at the output cap, an append-only image history and a one-hour prompt cache on direct Anthropic requests. Its worker keeps a Bash command off the shell's argv, so `pkill -f` with a pattern from the command no longer kills the shell, and its agent tools add `bc`, `column`, `pkill`, `pgrep`, `free` and `which`. `runtime/reason-agent-1.2` and earlier releases are named explicitly. |
+| 1.9.1 | October 2026 | Adapter 0.3.43 or later: since October 29, 2026 the Reason API starts every new API-key worker with direct access off, and earlier adapters' trials fail at worker startup (`execution_ineligible`). 0.3.43 turns it on for the trial's own worker. Scoring is unchanged. |
 
 ## References
 
