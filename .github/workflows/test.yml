@@ -15,3 +15,4 @@ jobs:
           python-version: "3.12"
       - run: python -m unittest discover -v tests
       - run: bash -n run.sh && bash -n run-pass.sh
+      - run: shellcheck -S warning run.sh run-pass.sh

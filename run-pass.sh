@@ -5,7 +5,7 @@
 #
 # One pass: every task of all three benchmarks, ATTEMPTS attempts each (default 3), for one
 # configuration (a model at one reasoning effort) on one harness: the adapter's default
-# dated Reason release, which never changes (runtime/reason-v7-2026-10), or HARNESS
+# dated Reason release, which never changes (runtime/reason-agent-1.3 from adapter 0.3.42), or HARNESS
 # (runtime/reason-c2-tools-v7 runs the deployment's current default harness, which
 # moves with every deploy). Tasks run on e2b
 # (up to 80 sandboxes) and, for the tasks listed in <benchmark>/modal-tasks.txt, on Modal
@@ -41,7 +41,8 @@ harness=${HARNESS:-}
 [ -n "$preflight" ] || : "${REASON_API_KEY:?Set REASON_API_KEY (see README.md)}"
 : "${ANTHROPIC_API_KEY:?Set ANTHROPIC_API_KEY; it grades SWE-Atlas QnA (see README.md)}"
 : "${E2B_API_KEY:?Set E2B_API_KEY (see README.md)}"
-command -v harbor >/dev/null || { echo 'Install Harbor first (see README.md)' >&2; exit 2; }
+command -v uv >/dev/null || { echo 'Install uv first (see README.md)' >&2; exit 2; }
+command -v harbor >/dev/null || { echo 'Install Harbor first: uv tool install "harbor[e2b,modal]==0.22.0" --with "reason-machines-harbor>=0.3.43"' >&2; exit 2; }
 [ -n "${MODAL_TOKEN_ID:-}" ] || [ -f "$HOME/.modal.toml" ] || { echo "Log in to Modal: uvx modal token new" >&2; exit 2; }
 
 # Registry digests pin the exact task sets.
@@ -107,7 +108,8 @@ harbor_job() {
 apps="$root/logs/$pass-$stamp.modal-apps"
 guard() { uv run -q "$root/modal_guard.py" "$@"; }
 modal_job() {
-  local bench=$1 app="reason-bench-$stamp-$bench" pid status=0
+  local bench=$1
+  local app="reason-bench-$stamp-$bench" pid status=0
   echo "$app" >> "$apps"
   guard fresh "$app"
   harbor_job "$bench" modal --ek "app_name=$app" --ek "sandbox_timeout_secs=$(lifetime "$bench")" &
@@ -156,12 +158,12 @@ wait "$modal_half" || status=1
 echo "finished: $(date -u +%Y%m%dT%H%M%SZ)" >> "$log.manifest"
 if [ -n "$preflight" ]; then
   expect=0; [ "$model" = nop ] || expect=1
-  python3 "$root/score.py" --expect "$expect" "$root/jobs/$pass" | tee "$log.score.md" || status=1
+  uv run -q "$root/score.py" --expect "$expect" "$root/jobs/$pass" | tee "$log.score.md" || status=1
   exit "$status"
 fi
 # Screen for reward hacking before scoring. SCREEN_JUDGE=1 also runs the paid judge (screening/screen.py).
 judge=(); [ "${SCREEN_JUDGE:-0}" != 1 ] || judge=(--judge)
-python3 "$root/screening/screen.py" ${judge[@]+"${judge[@]}"} "$root/jobs/$pass" > "$log.screening.md" || true
+uv run -q "$root/screening/screen.py" ${judge[@]+"${judge[@]}"} "$root/jobs/$pass" > "$log.screening.md" || true
 # --strict says whether the pass can be published yet: complete, on one configuration.
-python3 "$root/score.py" --strict "$root/jobs/$pass" | tee "$log.score.md" || status=1
+uv run -q "$root/score.py" --strict "$root/jobs/$pass" | tee "$log.score.md" || status=1
 exit "$status"

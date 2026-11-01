@@ -1,4 +1,4 @@
-"""screening/checks.py on small trajectories. Run: python3 -m unittest discover tests"""
+"""screening/checks.py on small trajectories. Run: uv run --python 3.12 python -m unittest discover tests"""
 import json
 import sys
 import tempfile

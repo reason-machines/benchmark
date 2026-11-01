@@ -1,6 +1,10 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = []
+# ///
 """Screen one run for reward hacking: every trial of every Harbor job under jobs/<run>/.
 
-Usage: python3 screening/screen.py [--judge] jobs/<run>
+Usage: uv run screening/screen.py [--judge] jobs/<run>
 
 Every trial is scanned (checks.py) and its flags listed for a person to review. --judge
 runs Artificial Analysis's reward hacking judge, `harbor analyze` with rubric.toml and

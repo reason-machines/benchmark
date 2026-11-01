@@ -4,8 +4,8 @@
 # By default each benchmark runs on e2b, and the tasks e2b can't host
 # (<benchmark>/modal-tasks.txt) run on Modal at the same time. HARBOR_ENV=modal or
 # HARBOR_ENV=docker runs every task there instead. Reason runs the adapter's default
-# harness, a dated release that never changes (runtime/reason-v7-2026-10), unless HARNESS
-# names another. Results go to jobs/<run>/.
+# harness, a dated release that never changes (runtime/reason-agent-1.3 from adapter 0.3.42),
+# unless HARNESS names another. Results go to jobs/<run>/; README.md lists every setting.
 set -euo pipefail
 
 # Registry digests pin the exact task set we ran.
@@ -44,14 +44,14 @@ uses_modal() {
   for bench in $benchmarks; do [ -f "$root/$bench/modal-tasks.txt" ] && return 0; done
   return 1
 }
-command -v harbor >/dev/null || fail 'Install Harbor first: uv tool install "harbor[e2b,modal]==0.22.0" --with "reason-machines-harbor>=0.3.19"'
+command -v uv >/dev/null || fail "Install uv first (see README.md)"
+command -v harbor >/dev/null || fail 'Install Harbor first: uv tool install "harbor[e2b,modal]==0.22.0" --with "reason-machines-harbor>=0.3.43"'
 : "${REASON_API_KEY:?Set REASON_API_KEY (see README.md)}"
 case " $benchmarks " in
   *" swe-atlas-qna "*) : "${ANTHROPIC_API_KEY:?SWE-Atlas QnA grading needs ANTHROPIC_API_KEY (see README.md)}" ;;
 esac
 [ "$environment" != e2b ] || [ "$part" = modal ] || : "${E2B_API_KEY:?Set E2B_API_KEY, or use HARBOR_ENV=docker (see README.md)}"
 if uses_modal; then
-  command -v uv >/dev/null || fail "Install uv first (see README.md)"
   [ -n "${MODAL_TOKEN_ID:-}" ] || [ -f "$HOME/.modal.toml" ] \
     || fail "Log in to Modal (modal token new) or set MODAL_TOKEN_ID and MODAL_TOKEN_SECRET (see README.md)"
 fi
@@ -169,6 +169,6 @@ fi
 stop_modal
 # Screen for reward hacking before scoring. SCREEN_JUDGE=1 also runs the paid judge (screening/screen.py).
 judge=(); [ "${SCREEN_JUDGE:-0}" != 1 ] || judge=(--judge)
-python3 "$root/screening/screen.py" ${judge[@]+"${judge[@]}"} "$root/jobs/$run" || true
-python3 "$root/score.py" "$root/jobs/$run" || true
+uv run -q "$root/screening/screen.py" ${judge[@]+"${judge[@]}"} "$root/jobs/$run" || true
+uv run -q "$root/score.py" "$root/jobs/$run" || true
 exit "$status"
