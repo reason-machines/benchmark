@@ -82,7 +82,7 @@ HARBOR_ENV=docker ./run.sh deepswe       # everything on local Docker, no cloud 
 | `PART` | `both` | With e2b: `e2b` skips the Modal tasks, `modal` runs only them |
 | `ATTEMPTS` | `3` | Attempts per task (`run-pass.sh` reads it too) |
 | `HARNESS` | the adapter's default release | A runtime profile, for example `runtime/reason-agent-1.2` (`run-pass.sh` reads it too) |
-| `RUN` | `<model>-<effort>` | Folder under `jobs/` |
+| `RUN` | `<model without provider>-<effort>`, for example `gpt-6-luna-xhigh` | Folder under `jobs/` |
 | `E2B_CONCURRENCY`, `MODAL_CONCURRENCY`, `DOCKER_CONCURRENCY` | `10`, `8`, `2` | Trials at a time |
 | `SCREEN_JUDGE` | `0` | `1` also runs the paid reward-hacking judge |
 
