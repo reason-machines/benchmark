@@ -195,8 +195,8 @@ subagents either.
 | 1.7 | October 2026 | Recommended release `runtime/reason-v8.1-2026-10` (adapter 0.3.35 or later); the adapter default stays `runtime/reason-v7-2026-10`. |
 | 1.8 | October 2026 | The adapter (0.3.38 or later) requests `runtime/reason-agent-1.2` by default; earlier releases are named explicitly. Claude Opus 5.5 joins the price table. Based on Coding Agent Index v1.5; Artificial Analysis moved to v2.0 on October 22, 2026. |
 | 1.8.1 | October 2026 | Adapter 0.3.39 or later: trial snapshot files use the marker `@@reason-git-snapshot@@`. |
-| 1.8.3 | October 2026 | GPT-6.1 Terra joins the price table at OpenAI's published rates. |
 | 1.8.2 | October 2026 | Claude Opus 4.8, Claude Opus 5, Claude Sonnet 5 and Claude Sonnet 5.5 join the price table: Anthropic's server-side refusal fallback serves declined Claude requests with them, and each step is priced by the model that served it. |
+| 1.8.3 | October 2026 | GPT-6.1 Terra joins the price table at OpenAI's published rates. |
 | 1.9 | October 2026 | The adapter (0.3.42 or later) requests `runtime/reason-agent-1.3` by default: Reason Agent 1.2's prompt and tools, plus continuing a response cut at the output cap, an append-only image history and a one-hour prompt cache on direct Anthropic requests. Its worker keeps a Bash command off the shell's argv, so `pkill -f` with a pattern from the command no longer kills the shell, and its agent tools add `bc`, `column`, `pkill`, `pgrep`, `free` and `which`. `runtime/reason-agent-1.2` and earlier releases are named explicitly. |
 | 1.9.1 | October 2026 | Adapter 0.3.43 or later: since October 29, 2026 the Reason API starts every new API-key worker with direct access off, and earlier adapters' trials fail at worker startup (`execution_ineligible`). 0.3.43 turns it on for the trial's own worker. Scoring is unchanged. |
 

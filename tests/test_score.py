@@ -1,4 +1,4 @@
-"""score.py on small Harbor job trees. Run: python3 -m unittest discover tests"""
+"""score.py on small Harbor job trees. Run: uv run --python 3.12 python -m unittest discover tests"""
 import contextlib
 import io
 import json

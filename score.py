@@ -1,6 +1,10 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = []
+# ///
 """Score one run: every Harbor job for each benchmark under jobs/<run>/.
 
-Usage: python score.py [--attempts K] [--strict] [--expect R] jobs/<run>
+Usage: uv run score.py [--attempts K] [--strict] [--expect R] jobs/<run>
 
 Jobs under <benchmark>/all are one whole run; jobs under <benchmark>/e2b, /modal and
 /lambda are parts of a split run. A run may hold any number of jobs per part: one job
