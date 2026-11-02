@@ -44,6 +44,15 @@ harness=${HARNESS:-}
 command -v uv >/dev/null || { echo 'Install uv first (see README.md)' >&2; exit 2; }
 command -v harbor >/dev/null || { echo 'Install Harbor first: uv tool install "harbor[e2b,modal]==0.22.0" --with "reason-machines-harbor>=0.3.43"' >&2; exit 2; }
 [ -n "${MODAL_TOKEN_ID:-}" ] || [ -f "$HOME/.modal.toml" ] || { echo "Log in to Modal: uvx modal token new" >&2; exit 2; }
+fail() { printf '%s\n' "$1" >&2; exit 2; }
+# A grader key Anthropic refuses makes every SWE-Atlas trial time out in grading, so check it first.
+check_grader() {
+  local code
+  code=$(curl -s -o /dev/null -w '%{http_code}' -m 30 "https://api.anthropic.com/v1/models/$grader" \
+    -H "x-api-key: $ANTHROPIC_API_KEY" -H "anthropic-version: 2023-06-01") || code=000
+  [ "$code" = 200 ] || fail "ANTHROPIC_API_KEY can't use the SWE-Atlas grader $grader (HTTP $code)"
+}
+check_grader
 
 # Registry digests pin the exact task sets.
 dataset() {
