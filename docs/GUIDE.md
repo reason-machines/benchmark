@@ -42,12 +42,12 @@ you ── run.sh ──> Harbor ──> task container (e2b, Modal or Docker)
 | e2b API key | the default cloud sandboxes | e2b.dev |
 | Modal login | tasks e2b can't host (GPUs, many containers) | `uvx modal token new` |
 
-Local Docker needs only the first three rows. DeepSWE needs no Anthropic key.
+Local Docker needs only the first three rows, plus the Anthropic key for SWE-Atlas QnA.
 
 ### 2. Install
 
 ```bash
-uv tool install "harbor[e2b,modal]==0.22.0" --with "reason-machines-harbor>=0.3.45"
+uv tool install "harbor[e2b,modal]==0.22.0" --with "reason-machines-harbor>=0.3.44"
 git clone https://github.com/reason-machines/benchmark && cd benchmark
 export REASON_API_KEY=...        # and ANTHROPIC_API_KEY, E2B_API_KEY as needed
 ```
@@ -92,7 +92,7 @@ then screens and scores with `--strict`.
 ### 6. Score, rerun, score again
 
 ```bash
-uv run screening/screen.py jobs/<run>          # flags suspicious steps; SCREEN_JUDGE=1 adds the paid judge
+uv run screening/screen.py jobs/<run>          # flags suspicious steps; --judge adds the paid judge
 uv run score.py jobs/<run>                     # the table
 uv run score.py --strict jobs/<run>            # is it complete, on one configuration?
 ```
@@ -134,7 +134,7 @@ it. Harbor Hub shows each attempt's `cost_usd`, which is what Reason charged
 - **Datasets pinned by digest.** Every run gets exactly the same tasks.
 - **e2b first, Modal for the rest.** e2b is cheap and fast to start; tasks it
   can't host (GPUs, several containers, more than 8 CPUs / 8 GiB) run on
-  Modal. SWE-Atlas runs at 8 CPUs / 8 GiB everywhere so both halves match.
+  Modal. SWE-Atlas runs at 8 CPUs / 8 GiB on e2b and Modal so both halves match.
 - **Harbor 0.22.0 in the scripts.** Our published results ran on it. The
   adapter also works with Harbor up to 0.25 for your own runs.
 - **Attempt slots.** Reruns fill empty slots in the order attempts ran and

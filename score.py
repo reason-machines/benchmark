@@ -374,7 +374,7 @@ def cost_table(scores: dict[str, dict]) -> list[str]:
     for bench, result in scores.items():
         kinds, total = result["cost_by_kind"], sum(result["cost_by_kind"])
         cells = " | ".join(f"${cost:,.2f} ({cost / total:.0%})" if total else "n/a" for cost in kinds)
-        bill = "n/a" if result["charged_per_attempt"] is None else f"${result['charged_per_attempt']:.3f}"
+        bill = "n/a" if result["charged_per_attempt"] is None else f"${result['charged_per_attempt']:.3f} (n={result['charged_attempts']})"
         lines.append(f"| {bench} | {result['costed_attempts'] - result['reported_cost_attempts']} | {cells} | {bill} |")
     return lines
 

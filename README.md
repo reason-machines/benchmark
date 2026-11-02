@@ -33,7 +33,7 @@ model access. Enable the model under
 [Models](https://reasonmachines.ai/customize?tab=models).
 
 ```bash
-uv tool install "harbor[e2b,modal]==0.22.0" --with "reason-machines-harbor>=0.3.43"
+uv tool install "harbor[e2b,modal]==0.22.0" --with "reason-machines-harbor>=0.3.44"
 export REASON_API_KEY=<YOUR-REASON-KEY>
 
 # One DeepSWE task on local Docker, to check your setup.
@@ -117,8 +117,7 @@ price it from the trajectory.
   an owner or admin key.
 - `ephemeral_workspace_parent_payment_required`: the workspace has no paid
   model access. Add billing, or bring your own provider key with `byok:`.
-- `Reason Session ended: status=error` with no code: upgrade the adapter to
-  0.3.45, which names the cause (for example `provider_auth_failed`, a
+- `Reason Session ended: status=error` with no code: adapter 0.3.45 and later name the cause (for example `provider_auth_failed`, a
   connected provider key that was refused); the trial's `agent/session.json`
   has it too.
 - `execution_ineligible` at worker startup: upgrade the adapter to 0.3.43 or

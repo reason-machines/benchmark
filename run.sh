@@ -49,7 +49,7 @@ uses_modal() {
   return 1
 }
 command -v uv >/dev/null || fail "Install uv first (see README.md)"
-command -v harbor >/dev/null || fail 'Install Harbor first: uv tool install "harbor[e2b,modal]==0.22.0" --with "reason-machines-harbor>=0.3.43"'
+command -v harbor >/dev/null || fail 'Install Harbor first: uv tool install "harbor[e2b,modal]==0.22.0" --with "reason-machines-harbor>=0.3.44"'
 : "${REASON_API_KEY:?Set REASON_API_KEY (see README.md)}"
 # A grader key Anthropic refuses makes every SWE-Atlas trial time out in grading, so check it first.
 check_grader() {
