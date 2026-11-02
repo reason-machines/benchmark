@@ -115,6 +115,9 @@ price it from the trajectory.
   model access. Add billing, or bring your own provider key with `byok:`.
 - `execution_ineligible` at worker startup: upgrade the adapter to 0.3.43 or
   later.
+- "ANTHROPIC_API_KEY can't use the SWE-Atlas grader": Anthropic refused the
+  key, or it has no access to Claude Opus 4.5. Without this check, every
+  SWE-Atlas attempt would time out in grading.
 - "the worker needs Reason egress on this offline task": add both
   `--allow-agent-host` flags.
 - Problems with the adapter or these scripts:

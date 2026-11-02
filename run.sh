@@ -35,6 +35,7 @@ case "$effort" in minimal|low|medium|high|xhigh|max) ;; *) fail "EFFORT must be 
 case "$environment" in e2b|modal|docker) ;; *) fail "HARBOR_ENV must be e2b, modal or docker" ;; esac
 case "$part" in both|e2b|modal) ;; *) fail "PART must be both, e2b or modal" ;; esac
 harness=${HARNESS:-}
+grader=claude-opus-4-5-20251101
 run=${RUN:-${model##*/}-$effort}
 root=$(cd -- "$(dirname -- "$0")" && pwd)
 
@@ -47,8 +48,15 @@ uses_modal() {
 command -v uv >/dev/null || fail "Install uv first (see README.md)"
 command -v harbor >/dev/null || fail 'Install Harbor first: uv tool install "harbor[e2b,modal]==0.22.0" --with "reason-machines-harbor>=0.3.43"'
 : "${REASON_API_KEY:?Set REASON_API_KEY (see README.md)}"
+# A grader key Anthropic refuses makes every SWE-Atlas trial time out in grading, so check it first.
+check_grader() {
+  local code
+  code=$(curl -s -o /dev/null -w '%{http_code}' -m 30 "https://api.anthropic.com/v1/models/$grader" \
+    -H "x-api-key: $ANTHROPIC_API_KEY" -H "anthropic-version: 2023-06-01") || code=000
+  [ "$code" = 200 ] || fail "ANTHROPIC_API_KEY can't use the SWE-Atlas grader $grader (HTTP $code)"
+}
 case " $benchmarks " in
-  *" swe-atlas-qna "*) : "${ANTHROPIC_API_KEY:?SWE-Atlas QnA grading needs ANTHROPIC_API_KEY (see README.md)}" ;;
+  *" swe-atlas-qna "*) : "${ANTHROPIC_API_KEY:?SWE-Atlas QnA grading needs ANTHROPIC_API_KEY (see README.md)}"; check_grader ;;
 esac
 [ "$environment" != e2b ] || [ "$part" = modal ] || : "${E2B_API_KEY:?Set E2B_API_KEY, or use HARBOR_ENV=docker (see README.md)}"
 if uses_modal; then
@@ -89,7 +97,7 @@ harbor_run() {
   if [ "$bench" = swe-atlas-qna ]; then
     # The grader is Claude Opus 4.5 through Anthropic's OpenAI-compatible API.
     args+=(--ve 'EVAL_API_KEY=${ANTHROPIC_API_KEY}' --ve EVAL_BASE_URL=https://api.anthropic.com/v1/
-      --ve EVAL_MODEL=claude-opus-4-5-20251101)
+      --ve "EVAL_MODEL=$grader")
     # SWE-Atlas images set ENTRYPOINT ["/bin/bash"], so Harbor's keep-alive has to be bash
     # arguments on Modal; on Docker an overlay replaces the entrypoint.
     case "$env" in
