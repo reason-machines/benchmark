@@ -17,6 +17,9 @@
 # --expect finds every task at 1 for oracle and 0 for nop, which shows each environment
 # grades a task as the task's authors do.
 set -euo pipefail
+# Bash reads a script as it runs it; the body is one function so that editing or pulling this file
+# during a run (which can take hours) cannot change what the run executes.
+main() {
 
 usage() { sed -n 2,4p "$0" >&2; exit 2; }
 stamp=$(date -u +%Y%m%dT%H%M%SZ)
@@ -42,7 +45,7 @@ harness=${HARNESS:-}
 : "${ANTHROPIC_API_KEY:?Set ANTHROPIC_API_KEY; it grades SWE-Atlas QnA (see README.md)}"
 : "${E2B_API_KEY:?Set E2B_API_KEY (see README.md)}"
 command -v uv >/dev/null || { echo 'Install uv first (see README.md)' >&2; exit 2; }
-command -v harbor >/dev/null || { echo 'Install Harbor first: uv tool install "harbor[e2b,modal]==0.22.0" --with "reason-machines-harbor>=0.3.43"' >&2; exit 2; }
+command -v harbor >/dev/null || { echo 'Install Harbor first: uv tool install "harbor[e2b,modal]==0.22.0" --with "reason-machines-harbor>=0.3.44"' >&2; exit 2; }
 [ -n "${MODAL_TOKEN_ID:-}" ] || [ -f "$HOME/.modal.toml" ] || { echo "Log in to Modal: uvx modal token new" >&2; exit 2; }
 fail() { printf '%s\n' "$1" >&2; exit 2; }
 # A grader key Anthropic refuses makes every SWE-Atlas trial time out in grading, so check it first.
@@ -176,3 +179,5 @@ uv run -q "$root/screening/screen.py" ${judge[@]+"${judge[@]}"} "$root/jobs/$pas
 # --strict says whether the pass can be published yet: complete, on one configuration.
 uv run -q "$root/score.py" --strict "$root/jobs/$pass" | tee "$log.score.md" || status=1
 exit "$status"
+}
+main "$@"
