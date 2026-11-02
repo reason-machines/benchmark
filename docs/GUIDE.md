@@ -159,7 +159,7 @@ Two numbers, both correct, for different questions:
 | | What it is | Where |
 |---|---|---|
 | **List-price cost** | The tokens priced at the provider's published rates: what the model calls cost | `score.py`'s table |
-| **Reason charged** | The Session's `cost_usd`: list price plus 25% when Reason pays for the model. With your own key (`byok:`) your provider bills the calls; we haven't checked `cost_usd` for those yet, so compare it with your provider's bill | `cost_usd` in Harbor's results and on Harbor Hub; "Reason charged" in `score.py` |
+| **Reason charged** | The Session's `cost_usd`: list price plus 25% when Reason pays for the model; exactly list price with your own key (`byok:`), which your provider bills directly | `cost_usd` in Harbor's results and on Harbor Hub; "Reason charged" in `score.py` |
 
 How we checked the tokens and cost are real (November 2, 2026):
 
@@ -172,7 +172,9 @@ How we checked the tokens and cost are real (November 2, 2026):
 3. For a whole day of gpt-6-luna traffic, the gateway's tokens match OpenAI's
    usage API to within 0.5% and its cost matches OpenAI's cost API to within
    0.6%. `PRICES` matches OpenAI's published price page.
-4. The first request's prompt tokens match the exported system prompt, tool
+4. With your own key (`byok:openai:gpt-6-luna`, one task per benchmark, subagents
+   included), every call and token matches OpenAI's usage API minute by minute.
+5. The first request's prompt tokens match the exported system prompt, tool
    definitions and task: nothing the model was sent is missing from the
    trajectory.
 

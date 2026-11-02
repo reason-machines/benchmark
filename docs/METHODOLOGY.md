@@ -173,7 +173,8 @@ what the model calls cost, comparable with other agents. When Reason pays for
 the model (a model id without `byok:`), Reason charges list price plus 25%.
 That charge is the `cost_usd` Harbor records for the attempt and uploads to
 Harbor Hub, and `score.py` lists it below the table as "Reason charged". With
-your own provider key, your provider bills the model calls at its own rates.
+your own provider key, your provider bills the model calls and `cost_usd` equals
+the list-price cost.
 
 **How we checked it** (November 2, 2026, `openai/gpt-6-luna`): for every
 attempt, the trajectory's per-response tokens add up to the Session's totals,
