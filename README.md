@@ -46,7 +46,9 @@ harbor run --dataset datacurve/deep-swe-1-1 --n-tasks 1 \
    --allow-agent-host relay.reasonmachines.com
 ```
 
-Drop `--n-tasks 1` to run every task once. The worker connects out to the
+The scripts here pin Harbor 0.22.0, which our published results ran on. For
+your own runs, the adapter (0.3.44 or later) also works with Harbor up to
+0.25. Drop `--n-tasks 1` to run every task once. The worker connects out to the
 Reason API and relay, so both `--allow-agent-host` flags are needed even on
 offline tasks. Each trial's folder under `jobs/` holds the Session's
 trajectory (`agent/trajectory.json`), its link and cost (`agent/session.json`)
@@ -128,3 +130,8 @@ price it from the trajectory.
   howpublished = {\url{https://github.com/reason-machines/benchmark}}
 }
 ```
+
+## License
+
+[Apache-2.0](LICENSE). The benchmarks themselves are their authors'; see each
+benchmark's page for its terms.
