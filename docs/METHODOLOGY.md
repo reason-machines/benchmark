@@ -1,6 +1,6 @@
 # Methodology
 
-Version 1.9.1. How we run and score Reason on the three benchmarks of the
+Version 1.10. How we run and score Reason on the three benchmarks of the
 [Artificial Analysis Coding Agent Index](https://artificialanalysis.ai/agents/coding-agents)
 v1.5, which this version is based on.
 
@@ -114,6 +114,9 @@ Each attempt's `agent/trajectory.json` (ATIF) is the Session as the model saw it
 
 - It includes the system prompt, the tool definitions the model was offered,
   and, at each context compaction, the summary the model continued from.
+- Tools carry the names the model saw. Dated releases from v8 call the
+  JavaScript tool `reason`; exports recorded before November 2, 2026 name it
+  `codemode`, Reason's internal name.
 - Tool output is exported whole. Only the literal secret values we inject,
   shown as `[redacted-secret]`, and the shapes of tokens Reason issues are
   masked. Task content that looks like a credential stays.
@@ -158,12 +161,35 @@ recompute it. Each model response records the tokens the provider reported.
 including the responses of any subagents the attempt started:
 
 - uncached input, cache reads, cache writes and output are priced separately;
+- OpenAI cache writes use its 30-minute write rate; Anthropic cache writes use
+  its 5-minute rate (1.25x input), except a step's one-hour writes
+  (`extra.cache_write_1h_tokens`, which `runtime/reason-agent-1.3` makes on
+  direct Anthropic requests), priced at 2x input;
 - a request with more than 272k input tokens uses the long-context rates;
 - the responses must add up to the token totals the Session recorded.
 
+**Two costs.** The table's cost is the provider's list price for the tokens:
+what the model calls cost, comparable with other agents. When Reason pays for
+the model (a model id without `byok:`), Reason charges list price plus 25%.
+That charge is the `cost_usd` Harbor records for the attempt and uploads to
+Harbor Hub, and `score.py` lists it below the table as "Reason charged". With
+your own provider key, your provider bills the model calls at its own rates.
+
+**How we checked it** (November 2, 2026, `openai/gpt-6-luna`): for every
+attempt, the trajectory's per-response tokens add up to the Session's totals,
+Harbor's `agent_result` and the Reason API's Session usage; each attempt's
+model calls in the trajectory are exactly the calls Reason's inference
+gateway served for it; `score.py`'s cost equals the gateway's provider cost,
+and Reason's charge is 1.25 times it. For a whole day, the gateway's
+gpt-6-luna tokens match OpenAI's usage API to within 0.5% (OpenAI also bills
+about 0.4% more requests: streams cut off before they finished) and its cost
+matches OpenAI's cost API to within 0.6%. `PRICES` matches OpenAI's
+published prices.
+
 When an attempt's trajectory lacks that usage, for example an export recorded
-before per-response usage existed, the cost Reason reported for the attempt is
-used instead. The table says how many attempts used it, and `--strict`
+before per-response usage existed, the cost Reason charged for the attempt is
+used instead (list price plus 25% on Reason-paid models, so those attempts read
+high). The table says how many attempts used it, and `--strict`
 requires every attempt to be priced. Below the table, the cost of each token
 kind is listed. Attempts without any cost are left out of the average, and the
 table shows how many had one. Agent time is the median time the agent ran per
@@ -199,6 +225,7 @@ subagents either.
 | 1.8.3 | October 2026 | GPT-6.1 Terra joins the price table at OpenAI's published rates. |
 | 1.9 | October 2026 | The adapter (0.3.42 or later) requests `runtime/reason-agent-1.3` by default: Reason Agent 1.2's prompt and tools, plus continuing a response cut at the output cap, an append-only image history and a one-hour prompt cache on direct Anthropic requests. Its worker keeps a Bash command off the shell's argv, so `pkill -f` with a pattern from the command no longer kills the shell, and its agent tools add `bc`, `column`, `pkill`, `pgrep`, `free` and `which`. `runtime/reason-agent-1.2` and earlier releases are named explicitly. |
 | 1.9.1 | October 2026 | Adapter 0.3.43 or later: since October 29, 2026 the Reason API starts every new API-key worker with direct access off, and earlier adapters' trials fail at worker startup (`execution_ineligible`). 0.3.43 turns it on for the trial's own worker. Scoring is unchanged. |
+| 1.10 | November 2026 | Cost: `score.py` also lists what Reason charged (list price plus 25% on Reason-paid models, the `cost_usd` Harbor uploads), prices Anthropic one-hour cache writes at 2x input, and the methodology records how token counts and cost were checked against the gateway and OpenAI's billing. Trajectories name the script tool as the model saw it (`reason`, not `codemode`) from November 2, 2026. `run.sh` and `run-pass.sh` check the SWE-Atlas grader key before launching. Scores are unchanged. |
 
 ## References
 

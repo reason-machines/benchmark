@@ -247,7 +247,7 @@ class ScoreTest(unittest.TestCase):
         result = self.tree.score("deepswe")
         self.assertEqual((result["cost_per_attempt"], result["reported_cost_attempts"]), (2.0, 2))
         status, out, err = self.main(None, True)
-        self.assertIn("$2.000 (2 reported)", out)
+        self.assertIn("$2.000 (2 at Reason's charge)", out)
         self.assertIn("| token usage | 2: incomplete (1), unknown (1) |", out)
         self.assertIn("1 counted attempts have token usage: incomplete", err)
 

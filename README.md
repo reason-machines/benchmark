@@ -54,6 +54,10 @@ offline tasks. Each trial's folder under `jobs/` holds the Session's
 trajectory (`agent/trajectory.json`), its link and cost (`agent/session.json`)
 and the verifier's result.
 
+New here? The [guide](docs/GUIDE.md) walks through a run step by step, what
+each file does, the decisions behind them, and how we checked the token and
+cost numbers.
+
 ## Full runs
 
 [`run.sh`](run.sh) runs one benchmark or all three with the pinned task sets,
@@ -113,6 +117,10 @@ price it from the trajectory.
   an owner or admin key.
 - `ephemeral_workspace_parent_payment_required`: the workspace has no paid
   model access. Add billing, or bring your own provider key with `byok:`.
+- `Reason Session ended: status=error` with no code: upgrade the adapter to
+  0.3.45, which names the cause (for example `provider_auth_failed`, a
+  connected provider key that was refused); the trial's `agent/session.json`
+  has it too.
 - `execution_ineligible` at worker startup: upgrade the adapter to 0.3.43 or
   later.
 - "ANTHROPIC_API_KEY can't use the SWE-Atlas grader": Anthropic refused the

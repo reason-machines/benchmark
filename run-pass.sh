@@ -17,6 +17,9 @@
 # --expect finds every task at 1 for oracle and 0 for nop, which shows each environment
 # grades a task as the task's authors do.
 set -euo pipefail
+# Bash reads a script as it runs it; the body is one function so that editing or pulling this file
+# during a run (which can take hours) cannot change what the run executes.
+main() {
 
 usage() { sed -n 2,4p "$0" >&2; exit 2; }
 stamp=$(date -u +%Y%m%dT%H%M%SZ)
@@ -176,3 +179,5 @@ uv run -q "$root/screening/screen.py" ${judge[@]+"${judge[@]}"} "$root/jobs/$pas
 # --strict says whether the pass can be published yet: complete, on one configuration.
 uv run -q "$root/score.py" --strict "$root/jobs/$pass" | tee "$log.score.md" || status=1
 exit "$status"
+}
+main "$@"

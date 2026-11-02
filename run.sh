@@ -7,6 +7,9 @@
 # harness, a dated release that never changes (runtime/reason-agent-1.3 from adapter 0.3.42),
 # unless HARNESS names another. Results go to jobs/<run>/; README.md lists every setting.
 set -euo pipefail
+# Bash reads a script as it runs it; the body is one function so that editing or pulling this file
+# during a run (which can take hours) cannot change what the run executes.
+main() {
 
 # Registry digests pin the exact task set we ran.
 dataset() {
@@ -180,3 +183,5 @@ judge=(); [ "${SCREEN_JUDGE:-0}" != 1 ] || judge=(--judge)
 uv run -q "$root/screening/screen.py" ${judge[@]+"${judge[@]}"} "$root/jobs/$run" || true
 uv run -q "$root/score.py" "$root/jobs/$run" || true
 exit "$status"
+}
+main "$@"

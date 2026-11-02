@@ -54,8 +54,9 @@ Cost per attempt prices the token counts in the attempt's trajectory, its subage
 included, one model response at a time from PRICES: uncached input, cache reads, cache
 writes and output, at the higher rates when a request's input is over 272k tokens.
 The responses must add up to the token totals the Session recorded ("token usage"
-complete); otherwise the attempt's reported cost_usd is used and the table says how
-many were. Below Builds, the cost of each token kind is listed for the priced attempts.
+complete); otherwise the cost_usd Reason charged for the attempt is used and the table says
+how many were. Reason charges its own model calls at list prices plus 25%, so those attempts
+read high; --strict requires none. Below Builds, the cost of each token kind is listed for the priced attempts.
 --strict also requires complete token usage.
 
 --expect R checks a preflight: it fails and lists every task whose pass@1 is not R
@@ -80,8 +81,11 @@ LISTED = ("environment", "server commit", "worker", "build per step")
 # Per-attempt trajectory checks (--strict) and the value each must have; other values are listed.
 CHECKED = {"trajectory fidelity": "complete", "token usage": "complete"}
 # USD per million tokens: uncached input, cache read, cache write, output; then the rates for a
-# request whose input is over LONG_CONTEXT_TOKENS. Each provider's list prices, which Reason also bills
-# at. Anthropic's cache write is its 5-minute rate (1.25x input); its current models have no
+# request whose input is over LONG_CONTEXT_TOKENS. Each provider's list prices: what the provider
+# charges for the tokens. Reason charges its own model calls at these prices plus 25%; that charge is
+# the cost_usd Harbor records and uploads, listed below the table as "Reason charged". OpenAI's cache
+# write is its 30-minute rate. Anthropic's cache write is its 5-minute rate (1.25x input); a step's
+# one-hour writes (extra.cache_write_1h_tokens) cost 2x input instead. Its current models have no
 # long-context tier (1M window at one price), so both tuples are the same. Claude Opus 4.8, Claude
 # Opus 5 and Claude Sonnet 5 are listed because Anthropic's server-side refusal fallback serves a
 # declined Claude Opus 5.5 / Claude Sonnet 5.5 request with them, and each step is priced by the
@@ -175,15 +179,18 @@ def priced(trajectory: dict) -> tuple[list[float] | None, str | None]:
         name = str(step.get("model_name") or model).rsplit(":", 1)[-1].rsplit("/", 1)[-1]
         if name not in PRICES:
             return None, f"no price for {name}"
+        extra = metrics.get("extra") or {}
         tokens = (metrics.get("prompt_tokens"), metrics.get("cached_tokens"),
-                  (metrics.get("extra") or {}).get("cache_write_tokens"), metrics.get("completion_tokens"))
+                  extra.get("cache_write_tokens"), metrics.get("completion_tokens"))
         # The long-context rates apply per request, so a step must hold one response.
         if None in tokens or (step.get("llm_call_count") or 1) != 1:
             return None, "incomplete"
         prompt_tokens, cached, written, output = tokens
         rates = PRICES[name][prompt_tokens > LONG_CONTEXT_TOKENS]
-        for i, n in enumerate((prompt_tokens - cached - written, cached, written, output)):
+        long_written = min(extra.get("cache_write_1h_tokens") or 0, written)
+        for i, n in enumerate((prompt_tokens - cached - written, cached, written - long_written, output)):
             costs[i] += n * rates[i] / 1_000_000
+        costs[2] += long_written * 2 * rates[0] / 1_000_000
         prompt, completion = prompt + prompt_tokens, completion + output
     final = trajectory.get("final_metrics") or {}
     session = (final.get("extra") or {}).get("session_totals") or final
@@ -293,7 +300,7 @@ def score(jobs: list[Path], failed: set[str], root: Path, adjudications: dict, k
     if not by_task or not k:
         return None
     task_scores, screened_means, slot_rewards, costs, minutes, short = {}, [], [], [], [], {}
-    by_kind, reported = [0.0] * len(TOKEN_KINDS), 0
+    by_kind, reported, charged = [0.0] * len(TOKEN_KINDS), 0, []
     builds, flagged = defaultdict(Counter), defaultdict(list)
     for task, attempts in by_task.items():
         slots = fill_slots([a[1:] for a in sorted(attempts, key=lambda a: a[0])], k)
@@ -309,6 +316,8 @@ def score(jobs: list[Path], failed: set[str], root: Path, adjudications: dict, k
                 continue
             trial_dir, trial = attempt
             trajectory = read_json(trial_dir / "agent" / "trajectory.json")
+            if (bill := (trial.get("agent_result") or {}).get("cost_usd")) is not None:
+                charged.append(bill)
             if (kinds := priced(trajectory)[0]) is not None:
                 costs.append(sum(kinds))
                 by_kind = [a + b for a, b in zip(by_kind, kinds)]
@@ -337,6 +346,8 @@ def score(jobs: list[Path], failed: set[str], root: Path, adjudications: dict, k
         "cost_per_attempt": sum(costs) / len(costs) if costs else None,
         "costed_attempts": len(costs),
         "reported_cost_attempts": reported,
+        "charged_per_attempt": sum(charged) / len(charged) if charged else None,
+        "charged_attempts": len(charged),
         "cost_by_kind": by_kind,
         "counted_attempts": sum(builds["model"].values()),
         "agent_minutes": statistics.median(minutes) if minutes else None,
@@ -356,13 +367,15 @@ def builds_table(builds: dict[str, Counter]) -> list[str]:
 
 
 def cost_table(scores: dict[str, dict]) -> list[str]:
-    lines = ["", "Cost of the priced attempts by token kind:", "",
-             "| Benchmark | Priced attempts | " + " | ".join(kind.capitalize() for kind in TOKEN_KINDS) + " |",
-             "|---|---|" + "---|" * len(TOKEN_KINDS)]
+    lines = ["", "Cost of the priced attempts by token kind, at list prices; Reason charged is the mean",
+             "cost_usd Reason billed per attempt (what Harbor uploads; list + 25% on Reason's own model calls):", "",
+             "| Benchmark | Priced attempts | " + " | ".join(kind.capitalize() for kind in TOKEN_KINDS) + " | Reason charged |",
+             "|---|---|" + "---|" * (len(TOKEN_KINDS) + 1)]
     for bench, result in scores.items():
         kinds, total = result["cost_by_kind"], sum(result["cost_by_kind"])
         cells = " | ".join(f"${cost:,.2f} ({cost / total:.0%})" if total else "n/a" for cost in kinds)
-        lines.append(f"| {bench} | {result['costed_attempts'] - result['reported_cost_attempts']} | {cells} |")
+        bill = "n/a" if result["charged_per_attempt"] is None else f"${result['charged_per_attempt']:.3f}"
+        lines.append(f"| {bench} | {result['costed_attempts'] - result['reported_cost_attempts']} | {cells} | {bill} |")
     return lines
 
 
@@ -406,7 +419,7 @@ def main(root: Path, attempts: int | None = None, strict: bool = False, expect: 
         if result["cost_per_attempt"] is not None and result["costed_attempts"] < result["counted_attempts"]:
             cost += f" ({result['costed_attempts']} of {result['counted_attempts']})"
         if result["reported_cost_attempts"]:
-            cost += f" ({result['reported_cost_attempts']} reported)"
+            cost += f" ({result['reported_cost_attempts']} at Reason's charge)"
         spread = "n/a" if result["attempt_spread"] is None else "{:.1%}–{:.1%}".format(*result["attempt_spread"])
         spent = "n/a" if result["agent_minutes"] is None else f"{result['agent_minutes']:.0f} min"
         low, high = result["ci95"]
