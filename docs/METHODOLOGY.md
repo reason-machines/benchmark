@@ -1,6 +1,6 @@
 # Methodology
 
-Version 1.10. How we run and score Reason on the three benchmarks of the
+Version 1.10.1. How we run and score Reason on the three benchmarks of the
 [Artificial Analysis Coding Agent Index](https://artificialanalysis.ai/agents/coding-agents)
 v1.5, which this version is based on.
 
@@ -227,6 +227,7 @@ subagents either.
 | 1.9 | October 2026 | The adapter (0.3.42 or later) requests `runtime/reason-agent-1.3` by default: Reason Agent 1.2's prompt and tools, plus continuing a response cut at the output cap, an append-only image history and a one-hour prompt cache on direct Anthropic requests. Its worker keeps a Bash command off the shell's argv, so `pkill -f` with a pattern from the command no longer kills the shell, and its agent tools add `bc`, `column`, `pkill`, `pgrep`, `free` and `which`. `runtime/reason-agent-1.2` and earlier releases are named explicitly. |
 | 1.9.1 | October 2026 | Adapter 0.3.43 or later: since October 29, 2026 the Reason API starts every new API-key worker with direct access off, and earlier adapters' trials fail at worker startup (`execution_ineligible`). 0.3.43 turns it on for the trial's own worker. Scoring is unchanged. |
 | 1.10 | November 2026 | Cost: `score.py` also lists what Reason charged (list price plus 25% on Reason-paid models, the `cost_usd` Harbor uploads), prices Anthropic one-hour cache writes at 2x input, and the methodology records how token counts and cost were checked against the gateway and OpenAI's billing. Trajectories name the script tool as the model saw it (`reason`, not `codemode`) from November 2, 2026. `run.sh` and `run-pass.sh` check the SWE-Atlas grader key before launching. Scores are unchanged. |
+| 1.10.1 | November 2026 | GLM-5.3-Flash joins the price table at Z.ai's list price ($0.15 input, $0.03 cache read, $0.50 output per 1M tokens; Z.ai bills cache writes as input). Self-hosted GLM-5.3-Flash passes are priced as Z.ai would bill their tokens. |
 
 ## References
 
