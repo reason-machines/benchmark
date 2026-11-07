@@ -111,6 +111,8 @@ PRICES = {
     # run (glm53-high-20261103) is priced as Z.ai would bill its tokens, for comparability.
     "GLM-5.3-Flash": ((0.15, 0.03, 0.15, 0.50), (0.15, 0.03, 0.15, 0.50)),
 }
+# Providers disagree on casing (zai-org/GLM-5.3-Flash vs z-ai/glm-5.3-flash), so match it case-insensitively.
+PRICES_BY_NAME = {name.lower(): rates for name, rates in PRICES.items()}
 LONG_CONTEXT_TOKENS = 272_000
 TOKEN_KINDS = ("uncached input", "cache read", "cache write", "output")
 # The benchmark redaction tier's markers: secret values we inject, and Reason-issued token
@@ -187,7 +189,7 @@ def priced(trajectory: dict) -> tuple[list[float] | None, str | None]:
         if not (metrics := step.get("metrics")):
             continue
         name = str(step.get("model_name") or model).rsplit(":", 1)[-1].rsplit("/", 1)[-1]
-        if name not in PRICES:
+        if name.lower() not in PRICES_BY_NAME:
             return None, f"no price for {name}"
         extra = metrics.get("extra") or {}
         tokens = (metrics.get("prompt_tokens"), metrics.get("cached_tokens"),
@@ -196,7 +198,7 @@ def priced(trajectory: dict) -> tuple[list[float] | None, str | None]:
         if None in tokens or (step.get("llm_call_count") or 1) != 1:
             return None, "incomplete"
         prompt_tokens, cached, written, output = tokens
-        rates = PRICES[name][prompt_tokens > LONG_CONTEXT_TOKENS]
+        rates = PRICES_BY_NAME[name.lower()][prompt_tokens > LONG_CONTEXT_TOKENS]
         long_written = min(extra.get("cache_write_1h_tokens") or 0, written)
         for i, n in enumerate((prompt_tokens - cached - written, cached, written - long_written, output)):
             costs[i] += n * rates[i] / 1_000_000
