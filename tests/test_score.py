@@ -274,6 +274,13 @@ class ScoreTest(unittest.TestCase):
         self.assertEqual(result["reported_cost_attempts"], 0)
         self.assertEqual(score.priced(priced)[1], "complete")
 
+    def test_cost_prices_glm_under_either_providers_casing(self):
+        # Hugging Face names it zai-org/GLM-5.3-Flash; OpenLake and OpenRouter, z-ai/glm-5.3-flash.
+        for model in ("zai-org/GLM-5.3-Flash", "openlake:z-ai/glm-5.3-flash"):
+            costs, status = score.priced(usage(response(prompt=1_000_000, cached=0, written=0, output=0), model=model))
+            self.assertEqual(status, "complete", model)
+            self.assertAlmostEqual(costs[0], 0.15)
+
     def test_cost_falls_back_to_the_reported_cost_when_usage_is_incomplete(self):
         short = usage(response(), totals={"total_prompt_tokens": 5_000})  # responses missing from the export
         unpriced = usage(response(), model="openai/gpt-9")
