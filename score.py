@@ -25,10 +25,15 @@ A slot still empty scores 0, and the task is listed for rerun.
 
 <run>/adjudications.json, if present, records decisions the trial files can't show,
 each keyed by a trial or job folder relative to <run>, with the reason as the value:
-  {"void": {...}, "refused": {...}}
+  {"void": {...}, "refused": {...}, "scored_zero": {...}}
 "void" attempts ran under a confirmed harness or environment bug and never count;
 the results file discloses them. "refused" marks provider refusals that Reason did
-not classify as provider_policy_refusal.
+not classify as provider_policy_refusal. "scored_zero" marks trials (by trial folder)
+that ended on the agent's side without a result, such as a Reason Session ending in
+error_class stuck or agent_ended_without_text: each fills its slot as a result of 0
+instead of waiting for a rerun, and the report lists them. It applies only to a trial
+that would otherwise be no result: a graded, timed-out, blocked or refused trial is
+scored as before, and "void" wins over it. Every key is optional.
 
 Pass@1 follows the Artificial Analysis formula: average each task's slot scores, then
 average across tasks. The index is the mean of the three benchmarks; its interval
@@ -245,7 +250,7 @@ def agent_minutes(trial: dict) -> float | None:
 
 
 def outcome(trial_dir: Path, trial: dict, root: Path, adjudications: dict) -> tuple[str, float]:
-    """("result", score), ("refused", 0) or ("void", 0) for one attempt."""
+    """("result", score), ("scored_zero", 0), ("refused", 0) or ("void", 0) for one attempt."""
     relative = trial_dir.relative_to(root)
     keys = {str(p) for p in (relative, *relative.parents)}
     if keys & adjudications.get("void", {}).keys():
@@ -265,11 +270,14 @@ def outcome(trial_dir: Path, trial: dict, root: Path, adjudications: dict) -> tu
         return "result", float(reward)
     if "instruction_blocked" in (exception.get("exception_message") or ""):
         return "result", 0.0
+    if str(relative) in adjudications.get("scored_zero", {}):
+        return "scored_zero", 0.0
     return "void", 0.0
 
 
 def fill_slots(attempts: list[tuple[str, float, tuple[Path, dict]]], k: int) -> list[tuple[float, tuple[Path, dict] | None]]:
-    """The first k results in order; a slot refused 1 + REFUSAL_REDRAWS times in a row scores 0."""
+    """The first k results in order (a "scored_zero" attempt is a result of 0); a slot refused
+    1 + REFUSAL_REDRAWS times in a row scores 0."""
     slots, refused = [], 0
     for kind, value, trial in attempts:
         if kind == "refused":
@@ -277,7 +285,7 @@ def fill_slots(attempts: list[tuple[str, float, tuple[Path, dict]]], k: int) -> 
             if refused > REFUSAL_REDRAWS:
                 slots.append((0.0, None))
                 refused = 0
-        elif kind == "result":
+        elif kind in ("result", "scored_zero"):
             slots.append((value, trial))
             refused = 0
         if len(slots) == k:
@@ -296,17 +304,19 @@ def ci95(*benchmarks: list[float]) -> tuple[float, float]:
 
 def score(jobs: list[Path], failed: set[str], root: Path, adjudications: dict, k: int | None = None):
     k = k or max(map(configured_attempts, jobs), default=0)
-    by_task = defaultdict(list)
+    by_task, zeroed = defaultdict(list), set()
     for index, job in enumerate(jobs):
         for trial_dir, trial in trials(job):
             order = (index, trial.get("started_at") or "", trial_dir.name)
-            by_task[trial["task_name"]].append((order, *outcome(trial_dir, trial, root, adjudications),
-                                                (trial_dir, trial)))
+            kind, value = outcome(trial_dir, trial, root, adjudications)
+            if kind == "scored_zero":
+                zeroed.add(trial_dir)
+            by_task[trial["task_name"]].append((order, kind, value, (trial_dir, trial)))
     if not by_task or not k:
         return None
     task_scores, screened_means, slot_rewards, costs, minutes, short = {}, [], [], [], [], {}
     by_kind, reported, charged = [0.0] * len(TOKEN_KINDS), 0, []
-    builds, flagged = defaultdict(Counter), defaultdict(list)
+    builds, flagged, scored_zero = defaultdict(Counter), defaultdict(list), []
     for task, attempts in by_task.items():
         slots = fill_slots([a[1:] for a in sorted(attempts, key=lambda a: a[0])], k)
         if len(slots) < k:
@@ -320,6 +330,8 @@ def score(jobs: list[Path], failed: set[str], root: Path, adjudications: dict, k
             if attempt is None:
                 continue
             trial_dir, trial = attempt
+            if trial_dir in zeroed:
+                scored_zero.append(str(trial_dir.relative_to(root)))
             trajectory = read_json(trial_dir / "agent" / "trajectory.json")
             if (bill := (trial.get("agent_result") or {}).get("cost_usd")) is not None:
                 charged.append(bill)
@@ -359,6 +371,7 @@ def score(jobs: list[Path], failed: set[str], root: Path, adjudications: dict, k
         "builds": builds,
         "flagged": dict(sorted(flagged.items())),
         "short": dict(sorted(short.items())),
+        "scored_zero": sorted(scored_zero),
     }
 
 
@@ -382,6 +395,17 @@ def cost_table(scores: dict[str, dict]) -> list[str]:
         bill = "n/a" if result["charged_per_attempt"] is None else f"${result['charged_per_attempt']:.3f} (n={result['charged_attempts']})"
         lines.append(f"| {bench} | {result['costed_attempts'] - result['reported_cost_attempts']} | {cells} | {bill} |")
     return lines
+
+
+def scored_zero_list(scores: dict[str, dict], adjudications: dict) -> list[str]:
+    """The counted attempts adjudications.json scored 0, with the reason it gives; none, nothing."""
+    reasons = adjudications.get("scored_zero", {})
+    rows = [f"| {bench} | {path} | {reasons.get(path, '')} |"
+            for bench, result in scores.items() for path in result["scored_zero"]]
+    if not rows:
+        return []
+    return ["", 'Counted attempts scored 0 by adjudications.json "scored_zero" (agent-side endings without a result):',
+            "", "| Benchmark | Trial | Reason |", "|---|---|---|", *rows]
 
 
 def incomplete(scores: dict[str, dict]) -> list[str]:
@@ -451,7 +475,7 @@ def main(root: Path, attempts: int | None = None, strict: bool = False, expect: 
                        f"| {s_low * 100:.1f}–{s_high * 100:.1f} |"
         print(f"| **Index** | | **{index * 100:.1f}** | {low * 100:.1f}–{high * 100:.1f} |{screened} | | | | |")
     if scores:
-        print("\n".join(builds_table(builds) + cost_table(scores)))
+        print("\n".join(builds_table(builds) + cost_table(scores) + scored_zero_list(scores, adjudications)))
     status = 0
     if strict and (problems := incomplete(scores) + mixed(builds)):
         print("Not publishable (--strict): " + "; ".join(problems) + ".", file=sys.stderr)
