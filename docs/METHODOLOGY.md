@@ -1,6 +1,6 @@
 # Methodology
 
-Version 1.10.1. How we run and score Reason on the three benchmarks of the
+Version 1.10.2. How we run and score Reason on the three benchmarks of the
 [Artificial Analysis Coding Agent Index](https://artificialanalysis.ai/agents/coding-agents)
 v1.5, which this version is based on.
 
@@ -42,6 +42,14 @@ Each task's own verifier grades it through [Harbor](https://harborframework.com)
 - **Provider refusals** are redrawn, as Artificial Analysis does: when the model
   provider refuses the request, the attempt is run again, up to 10 times. A
   slot whose first draw and all 10 redraws are refused scores 0.
+- **Agent-side endings:** an attempt whose Reason Session ends on the agent's
+  own side without a result (for example `error_class` `stuck` or
+  `agent_ended_without_text`), with no evidence of an infrastructure cause, is
+  a counted attempt that scores 0, not an infrastructure error. The run's
+  `adjudications.json` lists each under `"scored_zero"` with its reason;
+  `score.py` fills the attempt's slot with 0 and lists it below the table.
+  A graded, timed-out, blocked or refused attempt is scored by its own rule,
+  and a void attempt stays void.
 - Infrastructure errors are retried up to 3 times. A slot still without a
   result is run again later, and its first result counts. DeepSWE's
   grader-crash reward (-1) counts as no result.
@@ -53,8 +61,11 @@ Each task's own verifier grades it through [Harbor](https://harborframework.com)
   replaced.
 
 `score.py` reads these decisions from the trial files, and from
-`adjudications.json` in the run folder for void attempts and for refusals
-Reason did not classify.
+`adjudications.json` in the run folder for void attempts, for refusals
+Reason did not classify, and for agent-side endings scored 0 (`"void"`,
+`"refused"` and `"scored_zero"`, each keyed by trial or job folder for
+`"void"`, by trial folder for the others). Every key is optional; a file
+without `"scored_zero"` scores as before.
 
 ## Before and after a pass
 
@@ -228,6 +239,7 @@ subagents either.
 | 1.9.1 | October 2026 | Adapter 0.3.43 or later: since October 29, 2026 the Reason API starts every new API-key worker with direct access off, and earlier adapters' trials fail at worker startup (`execution_ineligible`). 0.3.43 turns it on for the trial's own worker. Scoring is unchanged. |
 | 1.10 | November 2026 | Cost: `score.py` also lists what Reason charged (list price plus 25% on Reason-paid models, the `cost_usd` Harbor uploads), prices Anthropic one-hour cache writes at 2x input, and the methodology records how token counts and cost were checked against the gateway and OpenAI's billing. Trajectories name the script tool as the model saw it (`reason`, not `codemode`) from November 2, 2026. `run.sh` and `run-pass.sh` check the SWE-Atlas grader key before launching. Scores are unchanged. |
 | 1.10.1 | November 2026 | GLM-5.3-Flash joins the price table at Z.ai's list price ($0.15 input, $0.03 cache read, $0.50 output per 1M tokens; Z.ai bills cache writes as input). Self-hosted GLM-5.3-Flash passes are priced as Z.ai would bill their tokens. |
+| 1.10.2 | November 2026 | `adjudications.json` takes a third decision, `"scored_zero"`: an attempt that ended on the agent's side without a result (Reason `error_class` `stuck`, `agent_ended_without_text`) counts as a 0 attempt instead of waiting for a rerun, and `score.py` lists these attempts. A pass's published adjudications reproduce its score with the public `score.py`. Runs without the key score as before. |
 
 ## References
 

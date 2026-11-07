@@ -183,6 +183,45 @@ class ScoreTest(unittest.TestCase):
         self.assertAlmostEqual(result["pass_at_1"], (2 / 3 + 0) / 2)
         self.assertEqual(result["short"], {"b": 3})
 
+    def stuck_trials(self):
+        """Task a: a stuck Session (no reward, no exception), then a graded rerun; b: graded twice."""
+        t = self.tree
+        first = t.job("deepswe", "e2b", "20261107T000000Z", 2, ("a", {}), ("a", GRADED), ("b", GRADED), ("b", GRADED))
+        t.job("deepswe", "e2b", "20261107T010000Z", 1, ("a", GRADED))
+        return sorted(p for p in first.iterdir() if p.is_dir() and p.name.startswith("a__"))
+
+    def test_without_scored_zero_an_agent_side_ending_waits_for_a_rerun(self):
+        stuck, _ = self.stuck_trials()
+        (self.tree.root / "adjudications.json").write_text(json.dumps({"void": {}, "refused": {}}))
+        result = self.tree.score("deepswe")
+        self.assertAlmostEqual(result["pass_at_1"], (1 + 1) / 2)  # the rerun fills the stuck trial's slot
+        self.assertEqual((result["short"], result["scored_zero"]), ({}, []))
+        (self.tree.root / "adjudications.json").unlink()
+        self.assertEqual(self.tree.score("deepswe")["pass_at_1"], result["pass_at_1"])
+        self.assertNotIn("scored_zero", self.main()[1])
+
+    def test_scored_zero_fills_the_slot_with_zero_and_is_listed(self):
+        stuck, graded = self.stuck_trials()
+        key = str(stuck.relative_to(self.tree.root))
+        (self.tree.root / "adjudications.json").write_text(json.dumps({"scored_zero": {
+            key: "agent-side ending (error_class stuck)",
+            str(graded.relative_to(self.tree.root)): "graded trials keep their reward"}}))
+        result = self.tree.score("deepswe")
+        self.assertAlmostEqual(result["pass_at_1"], (1 / 2 + 1) / 2)  # the later rerun is not counted
+        self.assertEqual((result["short"], result["scored_zero"]), ({}, [key]))
+        self.assertEqual(result["counted_attempts"], 4)
+        out = self.main()[1]
+        self.assertIn(f"| deepswe | {key} | agent-side ending (error_class stuck) |", out)
+
+    def test_void_and_refused_win_over_scored_zero(self):
+        stuck, _ = self.stuck_trials()
+        key = str(stuck.relative_to(self.tree.root))
+        for decision in ("void", "refused"):
+            (self.tree.root / "adjudications.json").write_text(json.dumps({decision: {key: "x"}, "scored_zero": {key: "y"}}))
+            result = self.tree.score("deepswe")
+            self.assertAlmostEqual(result["pass_at_1"], 1.0, msg=decision)
+            self.assertEqual(result["scored_zero"], [], msg=decision)
+
     def test_screened_judge_failures_score_zero(self):
         t = self.tree
         t.job("terminal-bench", "e2b", "20261007T000000Z", 2, ("a", GRADED), ("a", GRADED))
