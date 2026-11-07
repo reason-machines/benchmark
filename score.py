@@ -100,6 +100,11 @@ PRICES = {
     "claude-opus-4-8": ((5.0, 0.50, 6.25, 25.0), (5.0, 0.50, 6.25, 25.0)),
     "claude-sonnet-5-5": ((2.0, 0.20, 2.5, 10.0), (2.0, 0.20, 2.5, 10.0)),
     "claude-sonnet-5": ((2.0, 0.20, 2.5, 10.0), (2.0, 0.20, 2.5, 10.0)),
+    # Z.ai list price (docs.z.ai/guides/overview/pricing; OpenRouter z-ai/glm-5.3-flash, checked
+    # 2026-11-03): $0.15 input, $0.03 cached input, $0.50 output. Z.ai has no cache-write rate
+    # (cache storage is free), so written tokens bill as input; no long-context tier. A self-hosted
+    # run (glm53-high-20261103) is priced as Z.ai would bill its tokens, for comparability.
+    "GLM-5.3-Flash": ((0.15, 0.03, 0.15, 0.50), (0.15, 0.03, 0.15, 0.50)),
 }
 LONG_CONTEXT_TOKENS = 272_000
 TOKEN_KINDS = ("uncached input", "cache read", "cache write", "output")
