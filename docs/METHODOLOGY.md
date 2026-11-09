@@ -1,6 +1,6 @@
 # Methodology
 
-Version 1.10.2. How we run and score Reason on the three benchmarks of the
+Version 1.10.3. How we run and score Reason on the three benchmarks of the
 [Artificial Analysis Coding Agent Index](https://artificialanalysis.ai/agents/coding-agents)
 v1.5, which this version is based on.
 
@@ -240,6 +240,7 @@ subagents either.
 | 1.10 | November 2026 | Cost: `score.py` also lists what Reason charged (list price plus 25% on Reason-paid models, the `cost_usd` Harbor uploads), prices Anthropic one-hour cache writes at 2x input, and the methodology records how token counts and cost were checked against the gateway and OpenAI's billing. Trajectories name the script tool as the model saw it (`reason`, not `codemode`) from November 2, 2026. `run.sh` and `run-pass.sh` check the SWE-Atlas grader key before launching. Scores are unchanged. |
 | 1.10.1 | November 2026 | GLM-5.3-Flash joins the price table at Z.ai's list price ($0.15 input, $0.03 cache read, $0.50 output per 1M tokens; Z.ai bills cache writes as input). Self-hosted GLM-5.3-Flash passes are priced as Z.ai would bill their tokens. |
 | 1.10.2 | November 2026 | `adjudications.json` takes a third decision, `"scored_zero"`: an attempt that ended on the agent's side without a result (Reason `error_class` `stuck`, `agent_ended_without_text`) counts as a 0 attempt instead of waiting for a rerun, and `score.py` lists these attempts. A pass's published adjudications reproduce its score with the public `score.py`. Runs without the key score as before. |
+| 1.10.3 | November 2026 | Claude Fable 5.2 joins the price table at Anthropic's list price ($8 input, $0.20 cache read, $10 five-minute cache write, $40 output per 1M tokens; one-hour writes at 2x input, as for every Anthropic model). Scores are unchanged. |
 
 ## References
 

@@ -103,6 +103,9 @@ PRICES = {
     "claude-opus-5-5": ((4.0, 0.20, 5.0, 20.0), (4.0, 0.20, 5.0, 20.0)),
     "claude-opus-5": ((5.0, 0.50, 6.25, 25.0), (5.0, 0.50, 6.25, 25.0)),
     "claude-opus-4-8": ((5.0, 0.50, 6.25, 25.0), (5.0, 0.50, 6.25, 25.0)),
+    # Claude Fable 5.2 (claude-fable-5-2), Anthropic's list price checked 2026-11-09 (GET /v1/models/claude-fable-5-2 and
+    # platform.claude.com/docs/en/about-claude/pricing): $8 input, $0.20 cache read, $10 5-minute cache write, $40 output.
+    "claude-fable-5-2": ((8.0, 0.20, 10.0, 40.0), (8.0, 0.20, 10.0, 40.0)),
     "claude-sonnet-5-5": ((2.0, 0.20, 2.5, 10.0), (2.0, 0.20, 2.5, 10.0)),
     "claude-sonnet-5": ((2.0, 0.20, 2.5, 10.0), (2.0, 0.20, 2.5, 10.0)),
     # Z.ai list price (docs.z.ai/guides/overview/pricing; OpenRouter z-ai/glm-5.3-flash, checked
