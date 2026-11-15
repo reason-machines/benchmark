@@ -68,7 +68,7 @@ def _sandbox_name(session_id: str) -> str:
     if len(name) > SANDBOX_NAME_LEN:
         import hashlib
 
-        digest = hashlib.sha1(session_id.encode()).hexdigest()[:8]
+        digest = hashlib.sha256(session_id.encode()).hexdigest()[:8]
         name = name[: SANDBOX_NAME_LEN - 9].rstrip("-") + "-" + digest
     return name or "harbor"
 
