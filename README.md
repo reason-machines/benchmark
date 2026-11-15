@@ -77,7 +77,7 @@ HARBOR_ENV=nodus ./run.sh deepswe        # everything on Nodus Sandboxes (experi
 | `REASON_API_KEY` | every run | See quick start |
 | `ANTHROPIC_API_KEY` | SWE-Atlas QnA grading; `SCREEN_JUDGE=1` | The grader is Claude Opus 4.5; the agent never sees this key |
 | `E2B_API_KEY` | `HARBOR_ENV=e2b` (the default) and `run-pass.sh` | From [e2b](https://e2b.dev/dashboard) |
-| `NODUS_API_KEY` | `HARBOR_ENV=nodus` | From the [Nodus console](https://console.nodus-compute.ai/); also install the SDK into Harbor with `--with nodus-compute` |
+| `NODUS_API_KEY` | `HARBOR_ENV=nodus` | From the [Nodus console](https://console.nodus-compute.ai/), with the `sandboxes:write` scope (an inference-only `inference:invoke` key is refused); also install the SDK into Harbor with `--with nodus-compute`. Leave `NODUS_BASE_URL` unset: the SDK reads it as its API address, and the inference URL there gives `404 page not found` |
 | Modal login | the Modal half and `run-pass.sh` | `uvx modal token new`, or `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET`; `MODAL_PROFILE` picks the workspace |
 
 `run.sh` settings, all optional:

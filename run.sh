@@ -67,6 +67,13 @@ if [ "$environment" = nodus ]; then
   : "${NODUS_API_KEY:?HARBOR_ENV=nodus needs NODUS_API_KEY (see README.md)}"
   "$(dirname -- "$(readlink -f -- "$(command -v harbor)")")/python" -c 'import nodus' 2>/dev/null \
     || fail 'HARBOR_ENV=nodus needs the Nodus SDK in Harbor: uv tool install "harbor[e2b,modal]==0.22.0" --with "reason-machines-harbor>=0.3.44" --with nodus-compute'
+  # An inference-only key (scope inference:invoke) authenticates but can't create Sandboxes,
+  # which would fail every trial; the SDK's CLI checks the scope up front.
+  nodus_cli="$(dirname -- "$(readlink -f -- "$(command -v harbor)")")/nodus"
+  if [ -x "$nodus_cli" ]; then
+    [ "$("$nodus_cli" auth can-i create sandboxes 2>/dev/null)" = yes ] \
+      || fail "NODUS_API_KEY can't create Nodus Sandboxes (needs scope sandboxes:write; check with: nodus auth can-i create sandboxes)"
+  fi
 fi
 if uses_modal; then
   [ -n "${MODAL_TOKEN_ID:-}" ] || [ -f "$HOME/.modal.toml" ] \
