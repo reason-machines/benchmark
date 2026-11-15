@@ -35,7 +35,7 @@ effort=${EFFORT:-xhigh}
 environment=${HARBOR_ENV:-e2b}
 part=${PART:-both}
 case "$effort" in minimal|low|medium|high|xhigh|max) ;; *) fail "EFFORT must be minimal, low, medium, high, xhigh or max" ;; esac
-case "$environment" in e2b|modal|docker) ;; *) fail "HARBOR_ENV must be e2b, modal or docker" ;; esac
+case "$environment" in e2b|modal|docker|munito) ;; *) fail "HARBOR_ENV must be e2b, modal, docker or munito" ;; esac
 case "$part" in both|e2b|modal) ;; *) fail "PART must be both, e2b or modal" ;; esac
 harness=${HARNESS:-}
 grader=claude-opus-4-5-20251101
@@ -62,6 +62,8 @@ case " $benchmarks " in
   *" swe-atlas-qna "*) : "${ANTHROPIC_API_KEY:?SWE-Atlas QnA grading needs ANTHROPIC_API_KEY (see README.md)}"; check_grader ;;
 esac
 [ "$environment" != e2b ] || [ "$part" = modal ] || : "${E2B_API_KEY:?Set E2B_API_KEY, or use HARBOR_ENV=docker (see README.md)}"
+# munito.ai (prototype, munito/README.md): the environment class lives in munito/, not in the adapter.
+[ "$environment" != munito ] || : "${MUNITO_API_KEY:?Set MUNITO_API_KEY (see munito/README.md)}"
 if uses_modal; then
   [ -n "${MODAL_TOKEN_ID:-}" ] || [ -f "$HOME/.modal.toml" ] \
     || fail "Log in to Modal (modal token new) or set MODAL_TOKEN_ID and MODAL_TOKEN_SECRET (see README.md)"
@@ -80,6 +82,8 @@ harbor_run() {
     e2b) harbor_env=reasonmachines_harbor.environment:ReasonE2BEnvironment concurrency=${E2B_CONCURRENCY:-10} ;;
     modal) harbor_env=modal concurrency=${MODAL_CONCURRENCY:-8} ;;
     docker) harbor_env=reasonmachines_harbor.environment:ReasonDockerEnvironment concurrency=${DOCKER_CONCURRENCY:-2} ;;
+    munito) harbor_env=munito_environment:MunitoEnvironment concurrency=${MUNITO_CONCURRENCY:-10}
+      export PYTHONPATH="$root/munito${PYTHONPATH:+:$PYTHONPATH}" ;;
   esac
   local args=(
     --dataset "$(dataset "$bench")"
@@ -105,7 +109,7 @@ harbor_run() {
     # arguments on Modal; on Docker an overlay replaces the entrypoint.
     case "$env" in
       modal) args+=(--ek 'keepalive=["-c","sleep infinity"]') ;;
-      docker) args+=(--extra-docker-compose "$root/swe-atlas-qna/keepalive.compose.yaml") ;;
+      docker|munito) args+=(--extra-docker-compose "$root/swe-atlas-qna/keepalive.compose.yaml") ;;
     esac
     # e2b stops at 8 CPUs / 8 GiB and SWE-Atlas tasks ask for 16 / 16; every cloud trial runs
     # at 8 / 8 so the e2b and Modal halves match.
@@ -173,7 +177,7 @@ if [ "$environment" = e2b ]; then
 else
   for bench in $benchmarks; do
     if [ "$environment" = modal ]; then modal_job "$bench" all || status=1
-    else harbor_run "$bench" all docker || status=1
+    else harbor_run "$bench" all "$environment" || status=1
     fi
   done
 fi
