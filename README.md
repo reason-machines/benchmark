@@ -68,7 +68,6 @@ preflight (see the [methodology](docs/METHODOLOGY.md#before-and-after-a-pass)).
 ```bash
 ./run.sh deepswe                         # e2b, with the tasks e2b can't host on Modal
 HARBOR_ENV=docker ./run.sh deepswe       # everything on local Docker, no cloud accounts
-HARBOR_ENV=nodus ./run.sh deepswe        # everything on Nodus Sandboxes (experimental, see below)
 ./run-pass.sh openai/gpt-6-luna xhigh    # all three benchmarks, e2b + Modal
 ```
 
@@ -77,7 +76,6 @@ HARBOR_ENV=nodus ./run.sh deepswe        # everything on Nodus Sandboxes (experi
 | `REASON_API_KEY` | every run | See quick start |
 | `ANTHROPIC_API_KEY` | SWE-Atlas QnA grading; `SCREEN_JUDGE=1` | The grader is Claude Opus 4.5; the agent never sees this key |
 | `E2B_API_KEY` | `HARBOR_ENV=e2b` (the default) and `run-pass.sh` | From [e2b](https://e2b.dev/dashboard) |
-| `NODUS_API_KEY` | `HARBOR_ENV=nodus` | From the [Nodus console](https://console.nodus-compute.ai/), with the `sandboxes:write` scope (an inference-only `inference:invoke` key is refused); also install the SDK into Harbor with `--with nodus-compute`. Leave `NODUS_BASE_URL` unset: the SDK reads it as its API address, and the inference URL there gives `404 page not found` |
 | Modal login | the Modal half and `run-pass.sh` | `uvx modal token new`, or `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET`; `MODAL_PROFILE` picks the workspace |
 
 `run.sh` settings, all optional:
@@ -86,22 +84,12 @@ HARBOR_ENV=nodus ./run.sh deepswe        # everything on Nodus Sandboxes (experi
 |---|---|---|
 | `MODEL` | `openai/gpt-6-luna` | Model id, or `byok:<provider>:<model>` |
 | `EFFORT` | `xhigh` | `minimal`, `low`, `medium`, `high`, `xhigh` or `max` |
-| `HARBOR_ENV` | `e2b` | `e2b` (with Modal for the tasks in `<benchmark>/modal-tasks.txt`), `modal`, `docker` or `nodus` |
+| `HARBOR_ENV` | `e2b` | `e2b` (with Modal for the tasks in `<benchmark>/modal-tasks.txt`), `modal` or `docker` |
 | `PART` | `both` | With e2b: `e2b` skips the Modal tasks, `modal` runs only them |
 | `ATTEMPTS` | `3` | Attempts per task (`run-pass.sh` reads it too) |
 | `HARNESS` | the adapter's default release | A runtime profile, for example `runtime/reason-agent-1.2` (`run-pass.sh` reads it too) |
 | `RUN` | `<model without provider>-<effort>`, for example `gpt-6-luna-xhigh` | Folder under `jobs/` |
-| `E2B_CONCURRENCY`, `MODAL_CONCURRENCY`, `DOCKER_CONCURRENCY`, `NODUS_CONCURRENCY` | `10`, `8`, `2`, `8` | Trials at a time |
-| `NODUS_OPEN_EGRESS` | `0` | `1` runs allow-listed agent phases on Nodus with open egress when Nodus refuses an egress allow-list |
-
-`HARBOR_ENV=nodus` runs every trial in a [Nodus Sandbox](https://www.nodus-compute.ai/docs/guides/sandboxes/)
-through [`nodus_environment.py`](nodus_environment.py). It is experimental and not
-used for published results: Nodus cannot build images (the verifier's Dockerfile is
-replayed on its base image), and its SDK does not send an egress allow-list yet. The
-environment asks Nodus for one; if Nodus refuses it, offline tasks need
-`NODUS_OPEN_EGRESS=1`, which gives the agent open internet during its phase. That
-breaks the methodology's no-internet rule, so a run made that way is not comparable
-to an e2b or Docker run. The verifier's own Sandbox stays offline.
+| `E2B_CONCURRENCY`, `MODAL_CONCURRENCY`, `DOCKER_CONCURRENCY` | `10`, `8`, `2` | Trials at a time |
 | `SCREEN_JUDGE` | `0` | `1` also runs the paid reward-hacking judge |
 
 Extra arguments after the benchmark go to `harbor run`, for example

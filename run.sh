@@ -2,9 +2,8 @@
 # Usage: ./run.sh deepswe|swe-atlas-qna|terminal-bench|all [extra harbor run arguments]
 #
 # By default each benchmark runs on e2b, and the tasks e2b can't host
-# (<benchmark>/modal-tasks.txt) run on Modal at the same time. HARBOR_ENV=modal,
-# HARBOR_ENV=docker or HARBOR_ENV=nodus (Nodus Sandboxes, nodus_environment.py) runs
-# every task there instead. Reason runs the adapter's default
+# (<benchmark>/modal-tasks.txt) run on Modal at the same time. HARBOR_ENV=modal or
+# HARBOR_ENV=docker runs every task there instead. Reason runs the adapter's default
 # harness, a dated release that never changes (runtime/reason-agent-1.3 from adapter 0.3.42),
 # unless HARNESS names another. Results go to jobs/<run>/; README.md lists every setting.
 set -euo pipefail
@@ -36,7 +35,7 @@ effort=${EFFORT:-xhigh}
 environment=${HARBOR_ENV:-e2b}
 part=${PART:-both}
 case "$effort" in minimal|low|medium|high|xhigh|max) ;; *) fail "EFFORT must be minimal, low, medium, high, xhigh or max" ;; esac
-case "$environment" in e2b|modal|docker|nodus) ;; *) fail "HARBOR_ENV must be e2b, modal, docker or nodus" ;; esac
+case "$environment" in e2b|modal|docker) ;; *) fail "HARBOR_ENV must be e2b, modal or docker" ;; esac
 case "$part" in both|e2b|modal) ;; *) fail "PART must be both, e2b or modal" ;; esac
 harness=${HARNESS:-}
 grader=claude-opus-4-5-20251101
@@ -63,18 +62,6 @@ case " $benchmarks " in
   *" swe-atlas-qna "*) : "${ANTHROPIC_API_KEY:?SWE-Atlas QnA grading needs ANTHROPIC_API_KEY (see README.md)}"; check_grader ;;
 esac
 [ "$environment" != e2b ] || [ "$part" = modal ] || : "${E2B_API_KEY:?Set E2B_API_KEY, or use HARBOR_ENV=docker (see README.md)}"
-if [ "$environment" = nodus ]; then
-  : "${NODUS_API_KEY:?HARBOR_ENV=nodus needs NODUS_API_KEY (see README.md)}"
-  "$(dirname -- "$(readlink -f -- "$(command -v harbor)")")/python" -c 'import nodus' 2>/dev/null \
-    || fail 'HARBOR_ENV=nodus needs the Nodus SDK in Harbor: uv tool install "harbor[e2b,modal]==0.22.0" --with "reason-machines-harbor>=0.3.44" --with nodus-compute'
-  # An inference-only key (scope inference:invoke) authenticates but can't create Sandboxes,
-  # which would fail every trial; the SDK's CLI checks the scope up front.
-  nodus_cli="$(dirname -- "$(readlink -f -- "$(command -v harbor)")")/nodus"
-  if [ -x "$nodus_cli" ]; then
-    [ "$("$nodus_cli" auth can-i create sandboxes 2>/dev/null)" = yes ] \
-      || fail "NODUS_API_KEY can't create Nodus Sandboxes (needs scope sandboxes:write; check with: nodus auth can-i create sandboxes)"
-  fi
-fi
 if uses_modal; then
   [ -n "${MODAL_TOKEN_ID:-}" ] || [ -f "$HOME/.modal.toml" ] \
     || fail "Log in to Modal (modal token new) or set MODAL_TOKEN_ID and MODAL_TOKEN_SECRET (see README.md)"
@@ -93,9 +80,6 @@ harbor_run() {
     e2b) harbor_env=reasonmachines_harbor.environment:ReasonE2BEnvironment concurrency=${E2B_CONCURRENCY:-10} ;;
     modal) harbor_env=modal concurrency=${MODAL_CONCURRENCY:-8} ;;
     docker) harbor_env=reasonmachines_harbor.environment:ReasonDockerEnvironment concurrency=${DOCKER_CONCURRENCY:-2} ;;
-    # Nodus Sandboxes have no egress allow-list yet: NODUS_OPEN_EGRESS=1 runs the agent phase of
-    # offline tasks with open egress instead of refusing them (nodus_environment.py explains).
-    nodus) harbor_env=nodus_environment:NodusEnvironment concurrency=${NODUS_CONCURRENCY:-8} ;;
   esac
   local args=(
     --dataset "$(dataset "$bench")"
@@ -113,7 +97,6 @@ harbor_run() {
     --jobs-dir "$root/jobs/$run/$bench/$part" --job-name "$(date -u +%Y%m%dT%H%M%SZ)"
   )
   [ -z "$harness" ] || args+=(--ak "runtime_profile=$harness")
-  [ "$env" != nodus ] || [ "${NODUS_OPEN_EGRESS:-0}" != 1 ] || args+=(--ek unenforced_allowlist=open)
   if [ "$bench" = swe-atlas-qna ]; then
     # The grader is Claude Opus 4.5 through Anthropic's OpenAI-compatible API.
     args+=(--ve 'EVAL_API_KEY=${ANTHROPIC_API_KEY}' --ve EVAL_BASE_URL=https://api.anthropic.com/v1/
@@ -138,9 +121,7 @@ harbor_run() {
       if [ "$part" = e2b ]; then args+=(-x "$task"); elif [ -z "$selected" ]; then args+=(-i "$task"); fi
     done < "$root/$bench/modal-tasks.txt"
   fi
-  # PYTHONPATH lets Harbor import nodus_environment from this checkout.
-  PYTHONPATH="$root${PYTHONPATH:+:$PYTHONPATH}" DOCKER_DEFAULT_PLATFORM=linux/amd64 \
-    harbor run "${args[@]}" "$@" ${extra[@]+"${extra[@]}"}
+  DOCKER_DEFAULT_PLATFORM=linux/amd64 harbor run "${args[@]}" "$@" ${extra[@]+"${extra[@]}"}
 }
 
 # Every Modal job runs in its own app with a hard sandbox lifetime. A watcher stops the app
@@ -192,7 +173,7 @@ if [ "$environment" = e2b ]; then
 else
   for bench in $benchmarks; do
     if [ "$environment" = modal ]; then modal_job "$bench" all || status=1
-    else harbor_run "$bench" all "$environment" || status=1
+    else harbor_run "$bench" all docker || status=1
     fi
   done
 fi
