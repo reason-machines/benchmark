@@ -95,6 +95,42 @@ HARBOR_ENV=docker ./run.sh deepswe       # everything on local Docker, no cloud 
 Extra arguments after the benchmark go to `harbor run`, for example
 `./run.sh deepswe -i datacurve/igel-persist-feature-schema` or `-l 5`.
 
+### Models on Nodus
+
+[`connect-nodus.sh`](connect-nodus.sh) connects [Nodus](https://www.nodus-compute.ai)
+inference to the workspace of `REASON_API_KEY` as its Custom provider (an
+OpenAI-compatible endpoint). Nodus serves only the model calls; the sandboxes
+stay on e2b, Modal or Docker. It needs a `NODUS_API_KEY` with the
+`inference:invoke` scope and a `REASON_API_KEY` with `org:write`, and it
+replaces the workspace's existing Custom provider.
+
+```bash
+./connect-nodus.sh   # NODUS_MODELS picks the models, default GLM-5.3, Kimi K3, DeepSeek V4 Pro
+MODEL=byok:custom-endpoint:zai-org/glm-5.3 EFFORT=high ./run.sh deepswe
+```
+
+The Custom provider offers `low`, `medium` and `high` effort. `score.py` has
+no Nodus prices, so it reports no cost for these runs.
+
+### Keeping the orchestrator alive
+
+Harbor's orchestrator holds every trial, so a laptop that sleeps or a cloud
+session that parks kills the whole run.
+[`e2b-orchestrator.py`](e2b-orchestrator.py) runs `run.sh` inside its own e2b
+sandbox (4 CPUs, 8 GB) instead. A loop in that sandbox pushes its timeout an
+hour ahead every five minutes while `run.sh` lives, up to `--max-hours`, then
+leaves two hours to fetch the results:
+
+```bash
+uv run e2b-orchestrator.py start --max-hours 12 -- deepswe   # with run.sh's variables set
+uv run e2b-orchestrator.py status <sandbox-id>
+uv run e2b-orchestrator.py fetch <sandbox-id> --kill         # jobs/ and logs/ into this checkout
+```
+
+Only `run.sh`'s variables (the table above) are passed in, to a mode-600 file
+in the sandbox. The orchestrator sandbox counts against e2b's concurrent
+sandbox limit along with the trials.
+
 ## Scoring
 
 Results land in `jobs/<run>/<benchmark>/<part>/<job>/`. Both scripts score
