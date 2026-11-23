@@ -137,7 +137,7 @@ def jobs_for(bench_dir: Path) -> list[Path]:
 
 
 def trials(job: Path):
-    for path in job.glob("*/result.json"):
+    for path in sorted(job.glob("*/result.json")):
         trial = json.loads(path.read_text())
         if "task_name" in trial:
             yield path.parent, trial
