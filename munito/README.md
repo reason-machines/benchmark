@@ -83,21 +83,72 @@ PYTHONPATH=munito harbor run ... --env munito_environment:MunitoEnvironment
 
 ## Measurements
 
-Raw API probe (`uv run munito/probe.py e2b|munito ...`), from a Reason cloud
-machine, 10 sandboxes:
+All runs on 2026-11-22 from a Reason cloud machine (Linux, US). munito.ai org
+with $10,000 credits, sandboxes in its default region.
 
-| | e2b `base` | munito.ai |
-|---|---|---|
-| Create (p50 / p90) | 0.42 s / 0.47 s | pending |
-| First exec | 0.12 s | pending |
-| Exec round trip (p50) | 0.13 s | pending |
-| 1 MiB write + read | 1.30 s | pending |
-| Errors | 0 / 10 | pending |
+### Raw API probe
 
-Harbor oracle runs (reference solution + verifier), Terminal-Bench 4.0:
+`uv run munito/probe.py munito|e2b --n 10 --concurrency 10`, both providers
+at the same time, 10 sandboxes each:
 
-| Task | e2b env setup | e2b result | munito.ai env setup | munito.ai result |
-|---|---|---|---|---|
-| interleaved-vigenere | 1.8 s (cached template) | 1.0 | pending | pending |
-| html-js-filter | 2.2 s | 1.0 | pending | pending |
-| sound-change-cascade | 2.1 s | 1.0 | pending | pending |
+| | e2b `base` | munito.ai `base` | munito.ai `ubuntu` (Docker) |
+|---|---|---|---|
+| Create (p50 / p90) | 0.39 s / 0.60 s | 0.48 s / 1.46 s | 0.48 s / 1.47 s |
+| First exec (p50) | 0.13 s | 0.20 s | 0.20 s |
+| Exec round trip (p50) | 0.15 s | 0.22 s | 0.20 s |
+| 1 MiB write + read (p50) | 1.32 s | 1.31 s | 1.30 s |
+| Delete (p50) | 0.10 s | 0.16 s | 0.17 s |
+| dockerd ready after create | n/a | n/a | 0.46 s |
+| Errors | 0 / 10 | 0 / 10 | 0 / 10 |
+
+An earlier munito.ai run at concurrency 2 (n=4) gave create p50 0.57 s, also
+0 errors. Every sandbox the probe and Harbor started was listed as `stopped`
+afterwards.
+
+### Harbor oracle runs (reference solution + verifier), Terminal-Bench 4.0
+
+`harbor run --agent oracle --env munito_environment:MunitoEnvironment` vs
+`--env reasonmachines_harbor.environment:ReasonE2BEnvironment` (e2b templates
+already built and cached):
+
+| Task | e2b env setup | e2b trial | e2b | munito.ai env setup | munito.ai trial | munito.ai |
+|---|---|---|---|---|---|---|
+| interleaved-vigenere | 1.3 s | 36 s | 1.0 | 9.1 s | 55 s | 1.0 |
+| html-js-filter | 1.5 s | 169 s | 1.0 | 8.8 s | 171 s | 1.0 |
+| sound-change-cascade | 1.7 s | 8 s | 1.0 | 9.7 s (22.5 s for the verifier VM's cold pull) | 45 s | 1.0 |
+| kv-live-surgery (2 containers) | not possible on e2b (Modal) | | | 19.1 s | 121 s | 1.0 |
+| payments-pipeline-fix (4 containers, 8 vCPU / 16 GiB) | not possible on e2b (Modal) | | | 23.4 s | 159 s | 1.0 |
+
+munito.ai env setup splits into VM create ~1.0-1.3 s, dockerd ready ~0.3 s,
+image pull 2.2-5.2 s (16 s for one cold pull), `compose up` 0.6-1 s for one
+container and 8-15 s for the multi-container stacks, plus the network-policy
+and Harbor setup steps. Harbor starts a second VM for the verifier, which pays
+the same cost again; that is most of the per-trial gap on short tasks.
+
+### Reason agent on munito.ai
+
+`ReasonAgent` (`openai/gpt-6-luna`, effort high, ephemeral) on
+interleaved-vigenere with the `--allow-agent-host api.reasonmachines.com /
+relay.reasonmachines.com` allowlist enforced by the VM firewall: env setup
+8.8 s, agent ran 18 m 50 s with no infrastructure error, verifier 2 m 27 s,
+reward 0.0. The 0 is the agent's answer: its cracker passed 5 of 6 tests and
+decrypted about 17% of the text where 98% is needed. One agent attempt is not
+a score comparison against e2b.
+
+### Takeaways
+
+- **Works:** 5/5 oracle tasks reward 1.0, including two multi-container tasks
+  e2b cannot host, and a full Reason agent trial with the allowlist enforced.
+  0 API errors across 34 probe sandboxes and 13 Harbor VMs.
+- **Slower start:** ~9 s env setup per environment vs ~1.5 s on e2b with
+  cached templates, because every VM pulls the task image. Over a full run
+  (3 attempts x ~300 tasks, plus a verifier VM each) that is minutes of wall
+  time, not hours; it matters for short tasks only. A registry mirror or
+  pause/fork of one warm VM per image would remove it.
+- **Unlocks:** compose tasks and sizes above 8 vCPU / 8 GiB (up to 16 / 32),
+  which today go to Modal. Not tested: SWE-Atlas images with dead apt
+  sources, the 16-vCPU tasks, GPU tasks (unsupported).
+- **Cost:** per-second at $0.0072/vCPU-h + $0.0009/GiB-h; the 4 vCPU / 5 GiB
+  VM used here is ~$0.033/h.
+- **Not measured:** concurrency above 10, `no_capacity` behaviour at scale,
+  reward parity over a full benchmark run.
